@@ -76,3 +76,4 @@ server.log
 mini-services/tcp-bridge-rust/target/
 mini-services/tcp-bridge-rust/Cargo.lock
 mini-services/tcp-bridge-rust/node_modules/
+package-lock.json
