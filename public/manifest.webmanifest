@@ -1,0 +1,42 @@
+{
+  "name": "Modbus Analyzer",
+  "short_name": "Modbus",
+  "description": "Advanced Modbus RTU/ASCII/TCP traffic parser — paste hex, upload text or pcap, get color-coded frame breakdowns, Wireshark-style details, timeline graph, and CSV/JSON/PDF export. Works offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "categories": ["developer", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Parse traffic",
+      "short_name": "Parse",
+      "description": "Paste hex or upload pcap to decode Modbus frames",
+      "url": "./?tab=parse"
+    },
+    {
+      "name": "Build a frame",
+      "short_name": "Build",
+      "description": "Construct a valid Modbus RTU/ASCII/TCP frame",
+      "url": "./?tab=builder"
+    }
+  ]
+}
