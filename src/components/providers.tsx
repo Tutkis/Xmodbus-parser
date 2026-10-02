@@ -49,18 +49,34 @@ export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator)) return;
-    // Only register in production builds (dev HMR + SW conflicts).
-    if (process.env.NODE_ENV !== 'production') return;
-    const onLoad = () => {
-      // Resolve SW path relative to current location so it works with
-      // basePath (e.g. /repo-name/sw.js on GitHub Pages).
-      const swUrl = new URL('./sw.js', window.location.href).href;
-      navigator.serviceWorker.register(swUrl, { scope: './' }).catch(() => {
-        // Silent fail — SW is a progressive enhancement.
-      });
+
+    const registerSW = () => {
+      // Build SW URL using NEXT_PUBLIC_BASE_PATH so it works on both
+      // root domains and subpaths (e.g. GitHub Pages /repo-name/).
+      // Fallback: derive from the <link rel="manifest"> href which
+      // already has the correct basePath baked in by Next.js.
+      const bp = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, '') || '';
+      const swUrl = `${bp}/sw.js`;
+      const scope = `${bp}/`;
+      navigator.serviceWorker
+        .register(swUrl, { scope })
+        .then((reg) => {
+          // Check for updates every hour.
+          if (reg.waiting) {
+            reg.waiting.postMessage('SKIP_WAITING');
+          }
+        })
+        .catch(() => {
+          // Silent fail — SW is a progressive enhancement.
+        });
     };
-    window.addEventListener('load', onLoad);
-    return () => window.removeEventListener('load', onLoad);
+
+    if (document.readyState === 'complete') {
+      registerSW();
+    } else {
+      window.addEventListener('load', registerSW);
+      return () => window.removeEventListener('load', registerSW);
+    }
   }, []);
 
   // Make i18n singleton reference the same instance for non-hook callers.

@@ -14,6 +14,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// basePath-aware path prefixer for static assets in metadata.
+// NEXT_PUBLIC_BASE_PATH is set at build time by the GitHub Action
+// (e.g. "/Xmodbus-parser" for project Pages sites, empty for root).
+const BP = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, '') || '';
+const P = (path: string) => `${BP}${path}`;
+
 export const metadata: Metadata = {
   title: "Modbus Analyzer — RTU/ASCII/TCP Traffic Parser",
   description:
@@ -24,7 +30,7 @@ export const metadata: Metadata = {
     "SCADA", "automation", "serial", "Modbus RTU",
   ],
   authors: [{ name: "Tutkis" }],
-  manifest: "/manifest.webmanifest",
+  manifest: P("/manifest.webmanifest"),
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -32,28 +38,28 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-      { url: "/icon.svg", sizes: "any", type: "image/svg+xml" },
+      { url: P("/favicon-32.png"), sizes: "32x32", type: "image/png" },
+      { url: P("/favicon-16.png"), sizes: "16x16", type: "image/png" },
+      { url: P("/icon-192.png"), sizes: "192x192", type: "image/png" },
+      { url: P("/icon-512.png"), sizes: "512x512", type: "image/png" },
+      { url: P("/icon.svg"), sizes: "any", type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: P("/apple-touch-icon.png"), sizes: "180x180", type: "image/png" },
     ],
-    shortcut: ["/icon.svg"],
+    shortcut: [P("/icon.svg")],
   },
   openGraph: {
     title: "Modbus Analyzer",
     description: "PWA for parsing Modbus RTU/ASCII/TCP traffic",
     type: "website",
-    images: ["/icon-512.png"],
+    images: [P("/icon-512.png")],
   },
   twitter: {
     card: "summary",
     title: "Modbus Analyzer",
     description: "PWA for parsing Modbus RTU/ASCII/TCP traffic",
-    images: ["/icon-512.png"],
+    images: [P("/icon-512.png")],
   },
 };
 
