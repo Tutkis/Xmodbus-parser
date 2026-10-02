@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Activity, Hammer, LineChart, Settings, Github, Wifi } from 'lucide-react';
+import { Activity, Hammer, LineChart, Settings, Github, Wifi, Radio } from 'lucide-react';
 import { useAppStore, type TabId } from '@/lib/store/app-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
@@ -18,6 +18,7 @@ import { ParseTab } from '@/components/tabs/parse-tab';
 import { BuilderTab } from '@/components/tabs/builder-tab';
 import { TimelineTab } from '@/components/tabs/timeline-tab';
 import { SettingsTab } from '@/components/tabs/settings-tab';
+import { LiveTab } from '@/components/tabs/live-tab';
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +38,7 @@ export default function Page() {
       { id: 'parse', icon: Activity, label: t('app.tab.parse') },
       { id: 'builder', icon: Hammer, label: t('app.tab.builder') },
       { id: 'timeline', icon: LineChart, label: t('app.tab.timeline') },
+      { id: 'live', icon: Radio, label: t('app.tab.live') || 'Live' },
       { id: 'settings', icon: Settings, label: t('app.tab.settings') },
     ],
     [t],
@@ -48,15 +50,15 @@ export default function Page() {
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
           <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-3 sm:gap-4 sm:px-6">
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="grid h-8 w-8 place-items-center rounded-md bg-accent text-accent-foreground">
+            <div className="flex items-center gap-2 shrink-0 min-w-0">
+              <div className="grid h-8 w-8 place-items-center rounded-md bg-accent text-accent-foreground shrink-0">
                 <Wifi className="h-4 w-4" />
               </div>
-              <div className="hidden sm:block">
-                <div className="text-sm font-semibold leading-none">
+              <div className="hidden md:block min-w-0 max-w-[180px] lg:max-w-[260px]">
+                <div className="text-sm font-semibold leading-none truncate">
                   {t('app.title')}
                 </div>
-                <div className="text-[10px] text-muted-foreground leading-none mt-0.5">
+                <div className="text-[10px] text-muted-foreground leading-none mt-0.5 truncate">
                   {t('app.subtitle')}
                 </div>
               </div>
@@ -76,7 +78,7 @@ export default function Page() {
 
             {/* Locale selector */}
             <Select value={locale} onValueChange={(v) => setLocale(v)}>
-              <SelectTrigger className="h-8 w-[44px] sm:w-[100px] px-2 text-xs" aria-label={t('locale.label')}>
+              <SelectTrigger className="h-8 w-[90px] sm:w-[120px] px-2 text-xs shrink-0" aria-label={t('locale.label')}>
                 <SelectValue placeholder="EN" />
               </SelectTrigger>
               <SelectContent>
@@ -97,7 +99,7 @@ export default function Page() {
 
             {/* Theme selector */}
             <Select value={theme.id} onValueChange={(v) => setTheme(v)}>
-              <SelectTrigger className="h-8 w-[110px] sm:w-[140px] px-2 text-xs" aria-label="Theme">
+              <SelectTrigger className="h-8 w-[100px] sm:w-[140px] px-2 text-xs shrink-0" aria-label="Theme">
                 <SelectValue placeholder="Theme" />
               </SelectTrigger>
               <SelectContent>
@@ -149,16 +151,16 @@ export default function Page() {
               onValueChange={(v) => setTab(v as TabId)}
               className="w-full"
             >
-              <TabsList className="bg-transparent h-10 p-0 rounded-none border-b border-transparent w-full justify-start gap-1">
+              <TabsList className="bg-transparent h-10 p-0 rounded-none border-b border-transparent w-full justify-start gap-1 overflow-x-auto scrollbar-none">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 sm:px-4 h-10 text-xs sm:text-sm gap-1.5"
+                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 sm:px-4 h-10 text-xs sm:text-sm gap-1.5 shrink-0 whitespace-nowrap"
                     >
-                      <Icon className="h-3.5 w-3.5" />
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
                       <span className="hidden sm:inline">{tab.label}</span>
                     </TabsTrigger>
                   );
@@ -179,6 +181,9 @@ export default function Page() {
             </TabsContent>
             <TabsContent value="timeline" className="mt-0 focus-visible:outline-none">
               <TimelineTab />
+            </TabsContent>
+            <TabsContent value="live" className="mt-0 focus-visible:outline-none">
+              <LiveTab />
             </TabsContent>
             <TabsContent value="settings" className="mt-0 focus-visible:outline-none">
               <SettingsTab />

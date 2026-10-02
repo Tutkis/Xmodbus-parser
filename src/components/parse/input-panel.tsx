@@ -140,11 +140,11 @@ export function InputPanel() {
   return (
     <div className="rounded-lg border border-border bg-surface p-3 sm:p-4">
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="text-sm font-medium">{t('input.paste_hex')} / ASCII / pcap</span>
+        <span className="text-sm font-medium whitespace-nowrap">{t('input.paste_hex')} / ASCII / pcap</span>
         <div className="flex-1" />
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleSample}>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 shrink-0" onClick={handleSample}>
               <Sparkles className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t('input.sample_data')}</span>
             </Button>
@@ -157,7 +157,7 @@ export function InputPanel() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 gap-1.5 shrink-0"
               onClick={() => fileRef.current?.click()}
             >
               <FileUp className="h-3.5 w-3.5" />
@@ -172,7 +172,7 @@ export function InputPanel() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 gap-1.5 shrink-0"
               onClick={() => pcapRef.current?.click()}
             >
               <Upload className="h-3.5 w-3.5" />
@@ -184,7 +184,7 @@ export function InputPanel() {
 
         <Button
           size="sm"
-          className="h-8 gap-1.5"
+          className="h-8 gap-1.5 shrink-0"
           onClick={handleParse}
           disabled={isParsing}
         >
@@ -194,7 +194,7 @@ export function InputPanel() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8" onClick={handleClear}>
+            <Button variant="ghost" size="sm" className="h-8 shrink-0" onClick={handleClear}>
               <Trash2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t('input.clear')}</span>
             </Button>

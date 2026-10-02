@@ -19,6 +19,7 @@ export const en: Dictionary = {
   'app.subtitle': 'Parse, inspect and build Modbus RTU/ASCII/TCP traffic',
   'app.tab.parse': 'Parse',
   'app.tab.builder': 'Builder',
+  'app.tab.live': 'Live',
   'app.tab.timeline': 'Timeline',
   'app.tab.settings': 'Settings',
 

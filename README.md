@@ -118,6 +118,19 @@
 | MBAP Header (TCP) | ⚪ zinc | transport wrapper |
 | Exception Code | 🟥 dark red | error signal |
 
+### 📡 Live capture (Web Serial API)
+
+Connect a **USB-to-RS485 adapter** and capture Modbus RTU traffic in real time — directly from the browser, no drivers, no native app.
+
+- **Chrome / Edge / Opera** (v78+) — Web Serial API
+- Configurable: baud rate (1200–115200), data bits (7/8), stop bits (1/2), parity (none/even/odd)
+- Auto-detects protocol (RTU/ASCII)
+- Real-time parsing — frames appear as they arrive
+- Frames flow into the same Parse-tab UI (list + details + bytes) and Timeline
+- USB-to-RS485 adapters based on FTDI FT232, CH340, CP2102 all work
+
+> ⚠️ Firefox and Safari do not support Web Serial API. The Live tab shows a friendly notice on those browsers.
+
 ### 📱 PWA
 
 - **Installable** on desktop & mobile (Chrome/Edge/Safari "Install" / "Add to Home Screen")
@@ -129,14 +142,20 @@
 
 ## 📸 Screenshots
 
-### Parse tab — Wireshark-style 3-pane view
-![Parse tab](./docs/parse-tab.png)
+### Parse tab — Wireshark-style 3-pane view (Catppuccin Latte theme)
+![Parse tab — light](./docs/parse-tab-light.png)
+
+### Parse tab — dark theme (Catppuccin Mocha)
+![Parse tab — dark](./docs/parse-tab-dark.png)
 
 ### Builder tab — frame constructor with live colored preview
 ![Builder tab](./docs/builder-tab.png)
 
 ### Timeline tab — SVG sequence diagram (master ↔ slave)
 ![Timeline tab](./docs/timeline-tab.png)
+
+### Live tab — Web Serial API real-time capture
+![Live tab](./docs/live-tab.png)
 
 ### Settings tab — parse options, addressing, register map, themes, languages
 ![Settings tab](./docs/settings-tab.png)

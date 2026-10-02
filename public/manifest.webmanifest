@@ -6,23 +6,41 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0a0a0b",
-  "theme_color": "#0a0a0b",
+  "background_color": "#1e1a2e",
+  "theme_color": "#1e1a2e",
   "categories": ["developer", "productivity", "utilities"],
   "lang": "en",
   "dir": "ltr",
   "icons": [
     {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "./icon-maskable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -37,6 +55,12 @@
       "short_name": "Build",
       "description": "Construct a valid Modbus RTU/ASCII/TCP frame",
       "url": "./?tab=builder"
+    },
+    {
+      "name": "Live capture",
+      "short_name": "Live",
+      "description": "Connect to a serial port and capture Modbus RTU traffic in real time",
+      "url": "./?tab=live"
     }
   ]
 }

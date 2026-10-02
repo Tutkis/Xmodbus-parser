@@ -21,6 +21,7 @@ export const ru: Dictionary = {
   'app.subtitle': 'Разбор, анализ и сборка трафика Modbus RTU/ASCII/TCP',
   'app.tab.parse': 'Разбор',
   'app.tab.builder': 'Конструктор',
+  'app.tab.live': 'Эфир',
   'app.tab.timeline': 'Хронология',
   'app.tab.settings': 'Настройки',
 

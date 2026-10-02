@@ -103,13 +103,13 @@ export function PacketList() {
         <table className="w-full text-xs">
           <thead className="sticky top-0 z-10 bg-surface border-b border-border">
             <tr className="text-left text-muted-foreground">
-              <th className="px-2 py-1.5 font-medium w-[40px]">#</th>
-              <th className="px-2 py-1.5 font-medium w-[60px]">Dir</th>
-              <th className="px-2 py-1.5 font-medium w-[60px]">St</th>
-              <th className="px-2 py-1.5 font-medium w-[80px]">FC</th>
+              <th className="px-2 py-1.5 font-medium w-[32px]">#</th>
+              <th className="px-2 py-1.5 font-medium w-[24px]">Dir</th>
+              <th className="px-2 py-1.5 font-medium w-[36px] hidden xs:table-cell sm:table-cell">St</th>
+              <th className="px-2 py-1.5 font-medium w-[60px]">FC</th>
               <th className="px-2 py-1.5 font-medium">Info</th>
-              <th className="px-2 py-1.5 font-medium w-[60px]">Len</th>
-              <th className="px-2 py-1.5 font-medium w-[24px]"></th>
+              <th className="px-2 py-1.5 font-medium w-[40px] hidden sm:table-cell">Len</th>
+              <th className="px-2 py-1.5 font-medium w-[20px]"></th>
             </tr>
           </thead>
           <tbody>
@@ -158,15 +158,15 @@ export function PacketList() {
                         ) : allIdx}
                       </td>
                       <td className="px-2 py-1.5">{directionIcon(frame.direction)}</td>
-                      <td className="px-2 py-1.5 font-mono">{station}</td>
+                      <td className="px-2 py-1.5 font-mono hidden xs:table-cell sm:table-cell">{station}</td>
                       <td className="px-2 py-1.5 font-mono">
                         {fc !== undefined ? `0x${fc.toString(16).padStart(2, '0').toUpperCase()}` : '—'}
                       </td>
-                      <td className="px-2 py-1.5 truncate max-w-[200px]">
+                      <td className="px-2 py-1.5 truncate max-w-[140px] sm:max-w-[200px]">
                         <span className="font-medium">{fcName}</span>
-                        {info && <span className="text-muted-foreground ml-1 text-[10px]">{info}</span>}
+                        {info && <span className="text-muted-foreground ml-1 text-[10px] hidden sm:inline">{info}</span>}
                       </td>
-                      <td className="px-2 py-1.5 font-mono text-muted-foreground">{frame.raw.length}</td>
+                      <td className="px-2 py-1.5 font-mono text-muted-foreground hidden sm:table-cell">{frame.raw.length}</td>
                       <td className="px-2 py-1.5">{statusIcon(frame)}</td>
                     </tr>
                   </TooltipTrigger>
