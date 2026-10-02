@@ -10,6 +10,10 @@
 [![Made with Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 
+### ⚠️ Work in Progress
+
+> **This project is under active development.** Core parsing (RTU/ASCII/TCP, pcap, CRC/LRC validation) is stable and production-ready. Some advanced features (vendor FC tables, live capture, IPv4 fragmentation reassembly) are still being implemented. Bug reports and feature requests are welcome via [Issues](https://github.com/Tutkis/Xmodbus-parser/issues).
+
 </div>
 
 ---
@@ -125,16 +129,17 @@
 
 ## 📸 Screenshots
 
-> Add screenshots to `docs/` and reference them here after your first deploy.
+### Parse tab — Wireshark-style 3-pane view
+![Parse tab](./docs/parse-tab.png)
 
-```
-docs/
-  parse-tab.png       — 3-pane Wireshark-style view
-  builder-tab.png     — frame constructor with live preview
-  timeline-tab.png    — SVG sequence diagram
-  settings-tab.png    — configuration hub
-  mobile-view.png     — responsive layout on phone
-```
+### Builder tab — frame constructor with live colored preview
+![Builder tab](./docs/builder-tab.png)
+
+### Timeline tab — SVG sequence diagram (master ↔ slave)
+![Timeline tab](./docs/timeline-tab.png)
+
+### Settings tab — parse options, addressing, register map, themes, languages
+![Settings tab](./docs/settings-tab.png)
 
 ---
 
@@ -287,7 +292,7 @@ public/
 
 ## 📄 License
 
-[MIT](./LICENSE) © Zaika
+[MIT](./LICENSE) © Tutkis
 
 ---
 

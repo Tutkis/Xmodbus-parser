@@ -60,10 +60,14 @@ server.log
 /mini-services/
 /prisma/
 /worklog.md
-/docs/
 
 # Dev-environment specific (sandbox gateway + scaffold DB)
 /Caddyfile
 /db/
 *.db
 *.db-journal
+
+# Tool/sandbox artifacts (not part of project)
+/upload/
+/tool-results/
+/tmp/

@@ -73,12 +73,28 @@ export function toBytes(input: Uint8Array | string): Uint8Array {
 /**
  * Decode a hex-dump string (with optional whitespace / separators) into
  * bytes. Returns an empty array if the hex is malformed (odd length).
+ *
+ * Supports `//` and `#` line comments — everything from the comment marker
+ * to the end of the line is ignored. This lets users paste annotated hex
+ * dumps like:
+ *
+ * ```
+ * 01 03 00 00 00 0A C5 CD  // read 10 holding registers from slave 1
+ * 02 83 02 C1 71  # exception: illegal address
+ * ```
  */
 export function hexStringToBytes(s: string): Uint8Array {
-  // Keep only hex digits.
+  // Strip line comments first (// or #), then keep only hex digits.
   let cleaned = '';
-  for (let i = 0; i < s.length; i++) {
+  let i = 0;
+  while (i < s.length) {
     const c = s.charCodeAt(i);
+    // Detect line comments: `//` or `#`
+    if ((c === 0x2f && i + 1 < s.length && s.charCodeAt(i + 1) === 0x2f) || c === 0x23) {
+      // Skip to end of line.
+      while (i < s.length && s.charCodeAt(i) !== 0x0a && s.charCodeAt(i) !== 0x0d) i++;
+      continue;
+    }
     if (
       (c >= 0x30 && c <= 0x39) ||
       (c >= 0x41 && c <= 0x46) ||
@@ -86,11 +102,12 @@ export function hexStringToBytes(s: string): Uint8Array {
     ) {
       cleaned += s[i];
     }
+    i++;
   }
   if (cleaned.length === 0 || cleaned.length % 2 !== 0) return new Uint8Array(0);
   const out = new Uint8Array(cleaned.length / 2);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = parseInt(cleaned.substr(i * 2, 2), 16);
+  for (let j = 0; j < out.length; j++) {
+    out[j] = parseInt(cleaned.substr(j * 2, 2), 16);
   }
   return out;
 }

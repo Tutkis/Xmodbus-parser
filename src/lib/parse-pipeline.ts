@@ -4,8 +4,10 @@ import {
   parseStream,
   parseFrame,
   pairFrames,
+  detectProtocol,
   type ParsedFrame,
   type ParseOptions,
+  type ModbusProtocol,
 } from '@/lib/modbus';
 import { parsePcapFile } from '@/lib/pcap';
 import type { ParseSettings } from '@/lib/store/app-store';
@@ -19,7 +21,8 @@ export interface PcapParseResult {
 
 /**
  * Parse a free-form text input (hex dump, ASCII frame, or mixed) into
- * ParsedFrame[]. Auto-detects protocol unless settings.protocol is set.
+ * ParsedFrame[]. Auto-detects protocol per-segment to support mixed
+ * RTU + TCP + ASCII input in a single paste.
  */
 export function parseTextInput(
   text: string,
@@ -37,29 +40,93 @@ export function parseTextInput(
     registerMap: settings.registerMap,
   };
 
+  // If user forced a specific protocol, use single-protocol stream parse.
   if (settings.protocol !== 'auto') {
     opts.protocol = settings.protocol;
+    return safeParseStream(trimmed, opts);
   }
 
-  // Try stream parse first (handles multiple frames + auto-detect)
-  let frames: ParsedFrame[] = [];
-  try {
-    frames = parseStream(trimmed, opts);
-  } catch {
-    // Fallback: single-frame parse
+  // Auto-detect: check if input is single-protocol or mixed.
+  // ASCII is easy — starts with ':'. For hex dumps, split by lines and
+  // detect TCP vs RTU per line.
+  if (trimmed.startsWith(':')) {
+    return safeParseStream(trimmed, { ...opts, protocol: 'ascii' });
+  }
+
+  // Split into lines, strip comments, group by detected protocol.
+  const lines = trimmed.split(/\r?\n/).map((l) => l.replace(/\/\/.*$|#.*$/, '').trim()).filter((l) => l.length > 0);
+  if (lines.length === 0) return [];
+
+  // Detect protocol per line.
+  const lineProtocols: Array<{ protocol: ModbusProtocol | null; line: string }> = lines.map((line) => ({
+    protocol: detectProtocol(line),
+    line,
+  }));
+
+  // If all lines detect as the same protocol, use efficient stream parse.
+  const protocols = new Set(lineProtocols.map((lp) => lp.protocol));
+  if (protocols.size === 1 && !protocols.has(null)) {
+    const proto = lineProtocols[0].protocol!;
+    return safeParseStream(trimmed, { ...opts, protocol: proto });
+  }
+
+  // Mixed protocols (or some undetectable): parse line-by-line, grouping
+  // consecutive same-protocol lines into stream segments.
+  // NOTE: do NOT pair within each segment — local indices would be wrong
+  // after merge. Pair once on the full merged array at the end.
+  const frames: ParsedFrame[] = [];
+  let currentProto: ModbusProtocol | null = null;
+  let currentLines: string[] = [];
+
+  const flush = () => {
+    if (currentLines.length === 0 || currentProto === null) return;
+    const segment = currentLines.join('\n');
     try {
-      const single = parseFrame(trimmed, opts);
-      if (single) frames = [single];
+      const segFrames = parseStream(segment, { ...opts, protocol: currentProto });
+      frames.push(...segFrames);
     } catch {
-      /* swallow; caller will see empty array */
+      /* skip unparseable segment */
     }
-  }
+  };
 
-  // Pair req/resp on small/medium inputs.
+  for (const { protocol, line } of lineProtocols) {
+    const proto = protocol ?? 'rtu'; // default to RTU for undetectable
+    if (proto !== currentProto) {
+      flush();
+      currentProto = proto;
+      currentLines = [];
+    }
+    currentLines.push(line);
+  }
+  flush();
+
+  // Clear any local pairing indices set by parseStream, then re-pair on
+  // the full merged array so indices are globally correct.
+  for (const f of frames) {
+    f.pairedWith = undefined;
+  }
   if (frames.length > 0 && frames.length <= 256) {
     pairFrames(frames);
   }
 
+  return frames;
+}
+
+function safeParseStream(input: string, opts: ParseOptions): ParsedFrame[] {
+  let frames: ParsedFrame[] = [];
+  try {
+    frames = parseStream(input, opts);
+  } catch {
+    try {
+      const single = parseFrame(input, opts);
+      if (single) frames = [single];
+    } catch {
+      /* swallow */
+    }
+  }
+  if (frames.length > 0 && frames.length <= 256) {
+    pairFrames(frames);
+  }
   return frames;
 }
 
@@ -161,11 +228,14 @@ export function safeInputToBytes(text: string): Uint8Array | null {
   }
 }
 
-/** Sample data for the "Try sample" button — RTU read holding registers. */
-export const SAMPLE_HEX = `01 03 00 00 00 0A C5 CD
-01 03 14 00 0C 00 37 00 FF 00 00 00 0A 01 02 03 04 05 06 07 08 09 0A 7A 8D
-02 03 00 00 00 01 C4 0B
-02 03 02 12 34  // response with register value 0x1234
-02 83 02 C1 71  // exception: illegal address
-00 01 00 00 00 06 01 03 00 00 00 0A  // Modbus TCP request
-00 01 00 00 00 17 01 03 14 00 0C 00 37 00 FF 00 00 00 0A 01 02 03 04 05 06 07 08 09 0A  // Modbus TCP response`;
+/** Sample data for the "Try sample" button — mixed RTU + TCP + exception. */
+export const SAMPLE_HEX = `// === Modbus RTU traffic ===
+01 03 00 00 00 0A C5 CD  // slave 1, FC 03, read 10 holding regs from addr 0 (request)
+01 03 14 00 0C 00 37 00 FF 00 00 00 0A 01 02 03 04 05 06 07 08 09 0A 4B 54  // slave 1, FC 03, response (20 bytes data)
+02 03 00 00 00 01 84 39  // slave 2, FC 03, read 1 holding reg from addr 0 (request)
+02 03 02 12 34 F1 33  // slave 2, FC 03, response — register value 0x1234
+02 83 02 30 F1  // slave 2, FC 83 (exception), code 02 = illegal data address
+
+// === Modbus TCP traffic (MBAP header + PDU) ===
+00 01 00 00 00 06 01 03 00 00 00 0A  // tx=1, unit 1, FC 03, read 10 regs from addr 0 (request)
+00 01 00 00 00 17 01 03 14 00 0C 00 37 00 FF 00 00 00 0A 01 02 03 04 05 06 07 08 09 0A  // tx=1, unit 1, FC 03, response`;
