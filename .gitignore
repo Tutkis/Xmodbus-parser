@@ -71,3 +71,8 @@ server.log
 /upload/
 /tool-results/
 /tmp/
+
+# Rust build artifacts
+mini-services/tcp-bridge-rust/target/
+mini-services/tcp-bridge-rust/Cargo.lock
+mini-services/tcp-bridge-rust/node_modules/

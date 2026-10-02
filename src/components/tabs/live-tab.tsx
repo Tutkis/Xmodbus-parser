@@ -105,6 +105,9 @@ export function LiveTab() {
   const [tcpPort, setTcpPort] = useState(502);
   const [isTcpConnected, setIsTcpConnected] = useState(false);
   const [tcpProtocol, setTcpProtocol] = useState<ModbusProtocol>('tcp');
+  const [bridgeStatus, setBridgeStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [scanning, setScanning] = useState(false);
+  const [scanResults, setScanResults] = useState<Array<{ host: string; port: number; latency_ms: number }>>([]);
 
   // Shared state
   const [capturedFrames, setCapturedFrames] = useState<ParsedFrame[]>([]);
@@ -129,6 +132,120 @@ export function LiveTab() {
     const nav = navigator as NavigatorWithSerial;
     setIsSerialSupported(typeof nav.serial?.requestPort === 'function');
   }, []);
+
+  // Auto-detect the tcp-bridge service on mount + when switching to TCP mode.
+  // Probes ws://localhost:3030 and the gateway-forwarded path.
+  const checkBridge = useCallback(async () => {
+    setBridgeStatus('checking');
+    const candidates = [
+      'ws://localhost:3030/',
+      'ws://127.0.0.1:3030/',
+      // Through Caddy gateway (for hosted PWA)
+      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/?XTransformPort=3030`,
+    ];
+    for (const url of candidates) {
+      try {
+        const ws = new WebSocket(url);
+        const ok = await new Promise<boolean>((resolve) => {
+          const timer = setTimeout(() => {
+            try { ws.close(); } catch { /* */ }
+            resolve(false);
+          }, 800);
+          ws.onopen = () => {
+            clearTimeout(timer);
+            try { ws.close(); } catch { /* */ }
+            resolve(true);
+          };
+          ws.onerror = () => {
+            clearTimeout(timer);
+            resolve(false);
+          };
+        });
+        if (ok) {
+          setBridgeStatus('online');
+          return;
+        }
+      } catch {
+        /* try next */
+      }
+    }
+    setBridgeStatus('offline');
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'tcp') {
+      checkBridge();
+    }
+  }, [mode, checkBridge]);
+
+  // Scan local network for Modbus devices via the bridge.
+  const handleScan = useCallback(async () => {
+    if (bridgeStatus !== 'online') {
+      toast.error('Bridge not running. See instructions below.');
+      return;
+    }
+    setScanning(true);
+    setScanResults([]);
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host;
+    const wsUrl = `${wsProtocol}//${wsHost}/?XTransformPort=3030`;
+    let ws: WebSocket;
+    try {
+      // Try localhost first (faster, no gateway)
+      ws = new WebSocket('ws://localhost:3030/');
+    } catch {
+      try {
+        ws = new WebSocket(wsUrl);
+      } catch (e) {
+        setError(`WebSocket failed: ${e instanceof Error ? e.message : String(e)}`);
+        setScanning(false);
+        return;
+      }
+    }
+    let resolved = false;
+    wsRef.current = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'scan', port: tcpPort, timeout_ms: 200 }));
+    };
+    ws.onmessage = (ev) => {
+      let msg: { type: string; devices?: Array<{ host: string; port: number; latency_ms: number }>; message?: string };
+      try {
+        msg = JSON.parse(ev.data as string);
+      } catch {
+        return;
+      }
+      if (msg.type === 'scan_result' && msg.devices) {
+        setScanResults(msg.devices);
+        toast.success(`Found ${msg.devices.length} device(s)`);
+        resolved = true;
+        ws.close();
+        setScanning(false);
+      } else if (msg.type === 'error') {
+        setError(msg.message || 'Scan error');
+        toast.error(msg.message || 'Scan error');
+        resolved = true;
+        ws.close();
+        setScanning(false);
+      }
+    };
+    ws.onerror = () => {
+      if (!resolved) {
+        setError('Bridge unreachable. Is modbus-bridge running on port 3030?');
+        toast.error('Bridge unreachable');
+        setScanning(false);
+      }
+    };
+    ws.onclose = () => {
+      if (!resolved) setScanning(false);
+    };
+    // Timeout safety
+    setTimeout(() => {
+      if (!resolved && ws.readyState === WebSocket.OPEN) {
+        try { ws.close(); } catch { /* */ }
+        setScanning(false);
+      }
+    }, 10000);
+  }, [bridgeStatus, tcpPort]);
 
   const activeProtocol = mode === 'serial' ? serialProtocol : tcpProtocol;
 
@@ -594,6 +711,43 @@ export function LiveTab() {
 
           {/* TCP config */}
           <TabsContent value="tcp" className="mt-0">
+            {/* Bridge status indicator */}
+            <div className="flex flex-wrap items-center gap-2 mb-3 p-2 rounded-md border border-border bg-surfaceAlt">
+              <span className="text-xs font-medium shrink-0">Bridge:</span>
+              {bridgeStatus === 'checking' && (
+                <Badge variant="outline" className="gap-1 text-amber-600 dark:text-amber-400 border-amber-500/40 shrink-0">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  Checking…
+                </Badge>
+              )}
+              {bridgeStatus === 'online' && (
+                <Badge variant="outline" className="gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 shrink-0">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Online (ws://localhost:3030)
+                </Badge>
+              )}
+              {bridgeStatus === 'offline' && (
+                <Badge variant="outline" className="gap-1 text-red-600 dark:text-red-400 border-red-500/40 shrink-0">
+                  <AlertCircle className="h-3 w-3" />
+                  Not running
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px] gap-1 shrink-0"
+                onClick={checkBridge}
+              >
+                Recheck
+              </Button>
+              <div className="flex-1" />
+              {bridgeStatus === 'offline' && (
+                <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                  Download: <a href="https://github.com/Tutkis/Xmodbus-parser/releases" target="_blank" rel="noreferrer" className="text-accent underline">modbus-bridge</a> (700KB, no install)
+                </span>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
               <div className="space-y-1 col-span-2 sm:col-span-1">
                 <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Host</Label>
@@ -637,9 +791,31 @@ export function LiveTab() {
               </div>
             </div>
 
+            {/* Scan results dropdown */}
+            {scanResults.length > 0 && (
+              <div className="mb-3 p-2 rounded-md border border-border bg-surfaceAlt">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Found {scanResults.length} device(s) — click to connect:
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {scanResults.map((d) => (
+                    <button
+                      key={`${d.host}:${d.port}`}
+                      onClick={() => { setTcpHost(d.host); setTcpPort(d.port); }}
+                      disabled={isTcpConnected}
+                      className="rounded border border-border bg-surface px-2 py-1 text-xs font-mono hover:border-accent hover:bg-accent/10 transition-colors disabled:opacity-50"
+                    >
+                      {d.host}:{d.port}
+                      <span className="text-muted-foreground ml-1">({d.latency_ms}ms)</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-2">
               {!isTcpConnected ? (
-                <Button onClick={handleTcpConnect} size="sm" className="h-8 gap-1.5 shrink-0">
+                <Button onClick={handleTcpConnect} size="sm" className="h-8 gap-1.5 shrink-0" disabled={bridgeStatus === 'offline'}>
                   <Server className="h-3.5 w-3.5" />
                   <span>Connect</span>
                 </Button>
@@ -649,23 +825,47 @@ export function LiveTab() {
                   <span>Disconnect</span>
                 </Button>
               )}
+              <Button
+                onClick={handleScan}
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 shrink-0"
+                disabled={bridgeStatus !== 'online' || scanning || isTcpConnected}
+              >
+                {scanning ? (
+                  <>
+                    <span className="h-3 w-3 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+                    <span>Scanning…</span>
+                  </>
+                ) : (
+                  <>
+                    <Network className="h-3.5 w-3.5" />
+                    <span>Scan network</span>
+                  </>
+                )}
+              </Button>
               <Button onClick={handleClear} size="sm" variant="ghost" className="h-8 gap-1.5 shrink-0" disabled={capturedFrames.length === 0}>
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Clear</span>
               </Button>
-              <div className="flex-1" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-[10px] text-muted-foreground cursor-help whitespace-nowrap">
-                    Requires tcp-bridge service
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>Run the bridge locally: <code>cd mini-services/tcp-bridge &amp;&amp; bun run dev</code></p>
-                  <p className="mt-1">Then connect from the browser — the bridge proxies WebSocket to raw TCP.</p>
-                </TooltipContent>
-              </Tooltip>
             </div>
+
+            {bridgeStatus === 'offline' && (
+              <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-xs">
+                <div className="font-medium text-amber-700 dark:text-amber-400 mb-1.5">
+                  To use TCP mode, run the modbus-bridge binary locally:
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>Download <code className="font-mono">modbus-bridge</code> from <a href="https://github.com/Tutkis/Xmodbus-parser/releases" target="_blank" rel="noreferrer" className="text-accent underline">GitHub Releases</a> (700KB, no install)</li>
+                  <li>Run it: <code className="font-mono">./modbus-bridge</code> (listens on port 3030)</li>
+                  <li>Click "Recheck" above — status should turn green</li>
+                  <li>Click "Scan network" to auto-discover Modbus devices</li>
+                </ol>
+                <div className="mt-2 text-muted-foreground">
+                  Works on Windows, macOS, Linux, and Android (via Termux).
+                </div>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 

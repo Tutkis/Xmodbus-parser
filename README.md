@@ -129,12 +129,16 @@ Two live capture modes, both fully client-side:
 - Browser asks for permission when you click Connect — no drivers needed
 
 **TCP (WebSocket Bridge)** — for Modbus TCP over the network:
-- Browser can't make raw TCP connections, so a tiny WebSocket-to-TCP bridge proxies traffic
-- Run the bridge locally: `cd mini-services/tcp-bridge && bun run dev` (listens on port 3030)
-- Browser connects via `ws://.../?XTransformPort=3030` through the Caddy gateway
-- Enter device host + port (e.g. `192.168.1.10:502`), click Connect
+- Browser can't make raw TCP connections, so a tiny **Rust binary** (~700KB) proxies WebSocket → TCP
+- Download `modbus-bridge` from [GitHub Releases](https://github.com/Tutkis/Xmodbus-parser/releases) (Windows / macOS / Linux / ARM)
+- Run it: `./modbus-bridge` (listens on port 3030, no install, no runtime deps)
+- PWA auto-detects the bridge — status badge turns green when it's running
+- **"Scan network" button** — bridge parallel-scans your local /24 for devices with port 502 open, shows found devices as click-to-connect chips
+- Enter device host + port (or click a scan result), click Connect
 - Also supports RTU-over-TCP (some devices wrap RTU frames inside TCP)
 - No data stored by the bridge — pure passthrough
+- **Android**: run via Termux (`pkg install rust && cargo install modbus-tcp-bridge`)
+- **iOS**: run bridge on a PC/Raspberry Pi on same WiFi, connect to its IP
 
 Both modes:
 - Real-time parsing — frames appear as they arrive (250ms flush interval)
@@ -310,6 +314,18 @@ public/
 | Safari 15 | ❌ | ✅ | SW works, no install prompt |
 
 ---
+
+## 🗺️ Roadmap
+
+See [TODO.md](./TODO.md) for the full roadmap. Highlights:
+
+- **Modbus Master mode** — send requests from the browser (not just capture)
+- **Real-time register graphs** — SCADA-style monitoring of values over time
+- **Session export to pcap** — save captured traffic back to .pcap for Wireshark
+- **Modbus gateway/router** — bridge RTU ↔ TCP (legacy device integration)
+- **IWA edition** — Direct Sockets API for Chrome power users (no bridge needed)
+- **Web Bluetooth** — for Modbus RTU over BLE
+- **Vendor function code table** — user-defined FC schemas
 
 ## 📚 References
 
