@@ -118,18 +118,30 @@
 | MBAP Header (TCP) | ⚪ zinc | transport wrapper |
 | Exception Code | 🟥 dark red | error signal |
 
-### 📡 Live capture (Web Serial API)
+### 📡 Live capture (Serial + TCP)
 
-Connect a **USB-to-RS485 adapter** and capture Modbus RTU traffic in real time — directly from the browser, no drivers, no native app.
+Two live capture modes, both fully client-side:
 
+**Serial (Web Serial API)** — for Modbus RTU/ASCII over USB-to-RS485:
 - **Chrome / Edge / Opera** (v78+) — Web Serial API
 - Configurable: baud rate (1200–115200), data bits (7/8), stop bits (1/2), parity (none/even/odd)
-- Auto-detects protocol (RTU/ASCII)
-- Real-time parsing — frames appear as they arrive
-- Frames flow into the same Parse-tab UI (list + details + bytes) and Timeline
 - USB-to-RS485 adapters based on FTDI FT232, CH340, CP2102 all work
+- Browser asks for permission when you click Connect — no drivers needed
 
-> ⚠️ Firefox and Safari do not support Web Serial API. The Live tab shows a friendly notice on those browsers.
+**TCP (WebSocket Bridge)** — for Modbus TCP over the network:
+- Browser can't make raw TCP connections, so a tiny WebSocket-to-TCP bridge proxies traffic
+- Run the bridge locally: `cd mini-services/tcp-bridge && bun run dev` (listens on port 3030)
+- Browser connects via `ws://.../?XTransformPort=3030` through the Caddy gateway
+- Enter device host + port (e.g. `192.168.1.10:502`), click Connect
+- Also supports RTU-over-TCP (some devices wrap RTU frames inside TCP)
+- No data stored by the bridge — pure passthrough
+
+Both modes:
+- Real-time parsing — frames appear as they arrive (250ms flush interval)
+- Frames flow into the shared Parse-tab UI (list + details + bytes) and Timeline
+- Export captured frames to CSV/JSON/PDF
+
+> ⚠️ Firefox and Safari do not support Web Serial API. The Serial tab shows a friendly notice with a "Switch to TCP mode" button on those browsers.
 
 ### 📱 PWA
 
