@@ -1,6 +1,6 @@
 [package]
 name = "modbus-tcp-bridge"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 description = "WebSocket-to-TCP bridge for browser-based Modbus TCP live capture with network scanner"
 license = "MIT"

@@ -1,13 +1,11 @@
 /**
- * App version — read from package.json at build time.
+ * App version — injected at build time via Next.js env variable
+ * (configured in next.config.ts → env.NEXT_PUBLIC_APP_VERSION).
  *
- * Next.js bundles this as a static string, so it's always in sync with
- * the version in package.json without any runtime file reads.
+ * The value is read from package.json by next.config.ts and inlined
+ * into the bundle as a string constant. Always in sync with package.json,
+ * no runtime file reads, no fragile JSON imports.
  */
 
-// Import version from package.json. Next.js/Turbopack supports JSON
-// imports out of the box. The rest of package.json is tree-shaken away.
-import pkg from '../../../package.json' with { type: 'json' };
-
-export const APP_VERSION: string = pkg.version;
-export const APP_NAME: string = pkg.name;
+export const APP_VERSION: string = process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0-dev';
+export const APP_NAME: string = process.env.NEXT_PUBLIC_APP_NAME || 'modbus-analyzer';

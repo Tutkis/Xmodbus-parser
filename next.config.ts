@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import pkg from "./package.json";
 
 /**
  * basePath: configurable for GitHub Pages subpath deployment.
@@ -23,6 +24,12 @@ const nextConfig: NextConfig = {
   // Disable server-side image optimization (we use SVG icons only).
   images: {
     unoptimized: true,
+  },
+  // Expose app version to client-side code as a build-time constant.
+  // This avoids fragile JSON imports — Next.js inlines the value at build.
+  env: {
+    NEXT_PUBLIC_APP_VERSION: pkg.version,
+    NEXT_PUBLIC_APP_NAME: pkg.name,
   },
   typescript: {
     // Type errors are caught by `tsc --noEmit` in CI; build should still
