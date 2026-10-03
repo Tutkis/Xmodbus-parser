@@ -63,9 +63,24 @@ jobs:
         shell: bash
         run: |
           cd mini-services/tcp-bridge-rust/target/${{ matrix.target }}/release
-          # Find the binary (modbus-bridge or modbus-bridge.exe)
-          BIN=$(ls modbus-bridge* 2>/dev/null | head -1)
-          if [ -z "$BIN" ]; then echo "Binary not found!"; exit 1; fi
+          # Find the actual binary (skip .d dependency files on Windows).
+          # On Linux/macOS the binary is "modbus-bridge", on Windows "modbus-bridge.exe".
+          BIN=""
+          for candidate in modbus-bridge.exe modbus-bridge; do
+            if [ -f "$candidate" ] && [ -s "$candidate" ]; then
+              # Verify it's an executable, not a text .d file.
+              if file "$candidate" 2>/dev/null | grep -qiE "executable|PE32|ELF|Mach-O"; then
+                BIN="$candidate"
+                break
+              fi
+            fi
+          done
+          if [ -z "$BIN" ]; then
+            echo "Binary not found! Contents of dir:"
+            ls -la
+            exit 1
+          fi
+          echo "Found binary: $BIN ($(stat -c%s "$BIN" 2>/dev/null || stat -f%z "$BIN") bytes)"
           cp "$BIN" "${{ matrix.artifact }}"
 
       - name: Upload artifact
