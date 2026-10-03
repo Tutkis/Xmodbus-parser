@@ -87,8 +87,8 @@ import { cn } from '@/lib/utils';
 /* Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-/** App version surfaced in the About card. Kept in sync with package.json by hand. */
-const APP_VERSION = '0.2.1';
+/** App version — auto-imported from package.json at build time. */
+import { APP_VERSION } from '@/lib/version';
 
 /** GitHub URL placeholder — replace once the public repo is published. */
 const GITHUB_URL = 'https://github.com/example/modbus-analyzer';

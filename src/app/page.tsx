@@ -19,6 +19,7 @@ import { BuilderTab } from '@/components/tabs/builder-tab';
 import { TimelineTab } from '@/components/tabs/timeline-tab';
 import { SettingsTab } from '@/components/tabs/settings-tab';
 import { LiveTab } from '@/components/tabs/live-tab';
+import { APP_VERSION } from '@/lib/version';
 import {
   Tooltip,
   TooltipContent,
@@ -196,14 +197,23 @@ export default function Page() {
           <div className="mx-auto max-w-[1600px] px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-mono shrink-0">Modbus Analyzer</span>
+              <span className="shrink-0 font-mono text-accent/80">v{APP_VERSION}</span>
               <span className="hidden sm:inline">·</span>
               <span className="hidden sm:inline truncate">
                 RTU / ASCII / TCP · pcap & pcapng · offline-first PWA
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <a
+                href="https://github.com/Tutkis/Xmodbus-parser/releases"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-foreground transition-colors underline-offset-2 hover:underline"
+              >
+                Changelog
+              </a>
+              <span className="hidden md:inline">·</span>
               <span className="hidden md:inline">CRC-16 / LRC-8 verified</span>
-              <span className="md:hidden">PWA</span>
             </div>
           </div>
         </footer>
