@@ -55,12 +55,6 @@
       "short_name": "Build",
       "description": "Construct a valid Modbus RTU/ASCII/TCP frame",
       "url": "./?tab=builder"
-    },
-    {
-      "name": "Live capture",
-      "short_name": "Live",
-      "description": "Connect to a serial port and capture Modbus RTU traffic in real time",
-      "url": "./?tab=live"
     }
   ]
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Activity, Hammer, LineChart, Settings, Github, Wifi, Radio } from 'lucide-react';
+import { Activity, Hammer, LineChart, Settings, Github, Wifi } from 'lucide-react';
 import { useAppStore, type TabId } from '@/lib/store/app-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
@@ -18,7 +18,6 @@ import { ParseTab } from '@/components/tabs/parse-tab';
 import { BuilderTab } from '@/components/tabs/builder-tab';
 import { TimelineTab } from '@/components/tabs/timeline-tab';
 import { SettingsTab } from '@/components/tabs/settings-tab';
-import { LiveTab } from '@/components/tabs/live-tab';
 import { APP_VERSION } from '@/lib/version';
 import {
   Tooltip,
@@ -39,7 +38,6 @@ export default function Page() {
       { id: 'parse', icon: Activity, label: t('app.tab.parse') },
       { id: 'builder', icon: Hammer, label: t('app.tab.builder') },
       { id: 'timeline', icon: LineChart, label: t('app.tab.timeline') },
-      { id: 'live', icon: Radio, label: t('app.tab.live') || 'Live' },
       { id: 'settings', icon: Settings, label: t('app.tab.settings') },
     ],
     [t],
@@ -182,9 +180,6 @@ export default function Page() {
             </TabsContent>
             <TabsContent value="timeline" className="mt-0 focus-visible:outline-none">
               <TimelineTab />
-            </TabsContent>
-            <TabsContent value="live" className="mt-0 focus-visible:outline-none">
-              <LiveTab />
             </TabsContent>
             <TabsContent value="settings" className="mt-0 focus-visible:outline-none">
               <SettingsTab />

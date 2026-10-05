@@ -22,7 +22,6 @@ export const zh: Dictionary = {
   'app.subtitle': '解析、检查与构建 Modbus RTU/ASCII/TCP 报文',
   'app.tab.parse': '解析',
   'app.tab.builder': '构建器',
-  'app.tab.live': '实时',
   'app.tab.timeline': '时间线',
   'app.tab.settings': '设置',
 

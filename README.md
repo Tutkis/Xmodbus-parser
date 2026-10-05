@@ -118,34 +118,17 @@
 | MBAP Header (TCP) | ⚪ zinc | transport wrapper |
 | Exception Code | 🟥 dark red | error signal |
 
-### 📡 Live capture (Serial + TCP)
+### 📡 Companion: Modbus Workbench (coming soon)
 
-Two live capture modes, both fully client-side:
+For **live work with devices** (Modbus Master mode, real-time poll, capture, export to pcap) — a separate native desktop app is in development: **Modbus Workbench**.
 
-**Serial (Web Serial API)** — for Modbus RTU/ASCII over USB-to-RS485:
-- **Chrome / Edge / Opera** (v78+) — Web Serial API
-- Configurable: baud rate (1200–115200), data bits (7/8), stop bits (1/2), parity (none/even/odd)
-- USB-to-RS485 adapters based on FTDI FT232, CH340, CP2102 all work
-- Browser asks for permission when you click Connect — no drivers needed
+The PWA focuses on **offline analysis** (paste hex, upload pcap, decode). The Workbench will handle:
+- Modbus Master mode (send requests, poll queues)
+- Native TCP + serial access (no browser sandbox)
+- Real-time capture and graphs
+- Export to pcap for Wireshark
 
-**TCP (WebSocket Bridge)** — for Modbus TCP over the network:
-- Browser can't make raw TCP connections, so a tiny **Rust binary** (~700KB) proxies WebSocket → TCP
-- Download `modbus-bridge` from [GitHub Releases](https://github.com/Tutkis/Xmodbus-parser/releases) (Windows / macOS / Linux / ARM)
-- Run it: `./modbus-bridge` (listens on port 3030, no install, no runtime deps)
-- PWA auto-detects the bridge — status badge turns green when it's running
-- **"Scan network" button** — bridge parallel-scans your local /24 for devices with port 502 open, shows found devices as click-to-connect chips
-- Enter device host + port (or click a scan result), click Connect
-- Also supports RTU-over-TCP (some devices wrap RTU frames inside TCP)
-- No data stored by the bridge — pure passthrough
-- **Android**: run via Termux (`pkg install rust && cargo install modbus-tcp-bridge`)
-- **iOS**: run bridge on a PC/Raspberry Pi on same WiFi, connect to its IP
-
-Both modes:
-- Real-time parsing — frames appear as they arrive (250ms flush interval)
-- Frames flow into the shared Parse-tab UI (list + details + bytes) and Timeline
-- Export captured frames to CSV/JSON/PDF
-
-> ⚠️ Firefox and Safari do not support Web Serial API. The Serial tab shows a friendly notice with a "Switch to TCP mode" button on those browsers.
+See [WORKBENCH-PLAN.md](./WORKBENCH-PLAN.md) for the full roadmap.
 
 ### 📱 PWA
 
@@ -169,9 +152,6 @@ Both modes:
 
 ### Timeline tab — SVG sequence diagram (master ↔ slave)
 ![Timeline tab](./docs/timeline-tab.png)
-
-### Live tab — Web Serial API real-time capture
-![Live tab](./docs/live-tab.png)
 
 ### Settings tab — parse options, addressing, register map, themes, languages
 ![Settings tab](./docs/settings-tab.png)

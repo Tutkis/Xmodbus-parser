@@ -9,7 +9,7 @@ import type { RegisterMapEntry } from '@/lib/modbus/types';
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
 
-export type TabId = 'parse' | 'builder' | 'timeline' | 'live' | 'settings';
+export type TabId = 'parse' | 'builder' | 'timeline' | 'settings';
 
 export type FilterField =
   | 'station'
