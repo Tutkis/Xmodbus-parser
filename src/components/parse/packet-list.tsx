@@ -79,7 +79,7 @@ export function PacketList() {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center">
         <div className="text-muted-foreground text-sm">
-          {t('pane.list')} — paste hex above and click {t('input.parse')}
+          {t('pane.list_hint', { title: t('pane.list'), action: t('input.parse') })}
         </div>
       </div>
     );
@@ -103,12 +103,12 @@ export function PacketList() {
         <table className="w-full text-xs">
           <thead className="sticky top-0 z-10 bg-surface border-b border-border">
             <tr className="text-left text-muted-foreground">
-              <th className="px-2 py-1.5 font-medium w-[32px]">#</th>
-              <th className="px-2 py-1.5 font-medium w-[24px]">Dir</th>
-              <th className="px-2 py-1.5 font-medium w-[36px] hidden xs:table-cell sm:table-cell">St</th>
-              <th className="px-2 py-1.5 font-medium w-[60px]">FC</th>
-              <th className="px-2 py-1.5 font-medium">Info</th>
-              <th className="px-2 py-1.5 font-medium w-[40px] hidden sm:table-cell">Len</th>
+              <th className="px-2 py-1.5 font-medium w-[32px]">{t('column.index')}</th>
+              <th className="px-2 py-1.5 font-medium w-[24px]">{t('column.direction')}</th>
+              <th className="px-2 py-1.5 font-medium w-[36px] hidden xs:table-cell sm:table-cell">{t('column.station')}</th>
+              <th className="px-2 py-1.5 font-medium w-[60px]">{t('column.function')}</th>
+              <th className="px-2 py-1.5 font-medium">{t('column.info')}</th>
+              <th className="px-2 py-1.5 font-medium w-[40px] hidden sm:table-cell">{t('column.length')}</th>
               <th className="px-2 py-1.5 font-medium w-[20px]"></th>
             </tr>
           </thead>
@@ -120,7 +120,7 @@ export function PacketList() {
               const fcName = fc !== undefined ? functionCodeName(fc, t) : '—';
               const station = frame.slaveAddress ?? frame.unitId ?? '—';
               const exc = frame.isException && frame.exceptionCode !== undefined
-                ? EXCEPTION_CODES[frame.exceptionCode]?.name ?? `Exc ${frame.exceptionCode}`
+                ? EXCEPTION_CODES[frame.exceptionCode]?.name ?? t('column.exception_short', { code: frame.exceptionCode })
                 : null;
 
               // Combine hi/lo fields into 16-bit values for display.
@@ -172,7 +172,7 @@ export function PacketList() {
                   </TooltipTrigger>
                   <TooltipContent side="right" className="font-mono text-xs max-w-md">
                     <div className="space-y-1">
-                      <div>Frame #{allIdx} · {frame.protocol.toUpperCase()} · {frame.direction}</div>
+                      <div>{t('pane.frame_tooltip', { index: allIdx, protocol: frame.protocol.toUpperCase(), direction: frame.direction })}</div>
                       <div className="text-muted-foreground">
                         {Array.from(frame.raw).map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}
                       </div>

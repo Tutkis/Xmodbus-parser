@@ -163,14 +163,6 @@ const AREA_BADGE_CLASS: Record<MemoryArea, string> = {
     'bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950/60 dark:text-sky-200 dark:border-sky-800',
 };
 
-/** Human-readable memory-area name (used as the row label in the preview). */
-const AREA_LABEL: Record<MemoryArea, string> = {
-  holding: 'Holding Register',
-  input: 'Input Register',
-  coil: 'Coil',
-  discrete: 'Discrete Input',
-};
-
 /** A subset of byte roles whose colors are surfaced as the theme swatch preview. */
 const SWATCH_ROLES = [
   'address',
@@ -434,19 +426,17 @@ function ParseOptionsCard(): React.JSX.Element {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <SettingsIcon className="size-4" />
-          {/* i18n key wished: settings.parse_options */}
-          Parse Options
+          {t('settings.parse_options')}
         </CardTitle>
         <CardDescription>
-          How raw Modbus bytes are decoded into register values.
+          {t('settings.parse_options_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Protocol */}
         <div className="space-y-2">
           <Label htmlFor="set-protocol">
-            {/* i18n key wished: settings.protocol */}
-            Protocol
+            {t('settings.protocol')}
           </Label>
           <Select
             value={settings.protocol}
@@ -458,10 +448,10 @@ function ParseOptionsCard(): React.JSX.Element {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="auto">Auto-detect</SelectItem>
-              <SelectItem value="rtu">RTU (serial, CRC-16)</SelectItem>
-              <SelectItem value="ascii">ASCII (serial, LRC-8)</SelectItem>
-              <SelectItem value="tcp">TCP/IP (MBAP header)</SelectItem>
+              <SelectItem value="auto">{t('settings.protocol_auto')}</SelectItem>
+              <SelectItem value="rtu">{t('settings.protocol_rtu')}</SelectItem>
+              <SelectItem value="ascii">{t('settings.protocol_ascii')}</SelectItem>
+              <SelectItem value="tcp">{t('settings.protocol_tcp')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -512,11 +502,10 @@ function ParseOptionsCard(): React.JSX.Element {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <Label htmlFor="set-autodetect">
-              {/* i18n key wished: settings.auto_detect */}
-              Auto-detect byte order
+              {t('settings.auto_detect')}
             </Label>
             <p className="text-muted-foreground text-xs">
-              Try to detect 32-bit float byte order automatically.
+              {t('settings.auto_detect_desc')}
             </p>
           </div>
           <Switch
@@ -546,12 +535,10 @@ function AddressingCard(): React.JSX.Element {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Code2 className="size-4" />
-          {/* i18n key wished: settings.addressing */}
-          Addressing
+          {t('settings.addressing')}
         </CardTitle>
         <CardDescription>
-          How register and coil addresses are displayed in the table and
-          timeline views.
+          {t('settings.addressing_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -568,15 +555,13 @@ function AddressingCard(): React.JSX.Element {
             <div className="flex items-center gap-2">
               <RadioGroupItem value="0" id="base-0" />
               <Label htmlFor="base-0" className="font-normal cursor-pointer">
-                {/* i18n key wished: settings.base_offset_0 */}
-                0-based (Modbus spec)
+                {t('settings.base_offset_0')}
               </Label>
             </div>
             <div className="flex items-center gap-2">
               <RadioGroupItem value="1" id="base-1" />
               <Label htmlFor="base-1" className="font-normal cursor-pointer">
-                {/* i18n key wished: settings.base_offset_1 */}
-                1-based (PLC convention)
+                {t('settings.base_offset_1')}
               </Label>
             </div>
           </RadioGroup>
@@ -597,13 +582,13 @@ function AddressingCard(): React.JSX.Element {
             <div className="flex items-center gap-2">
               <RadioGroupItem value="relative" id="fmt-rel" />
               <Label htmlFor="fmt-rel" className="font-normal cursor-pointer">
-                {t('options.relative')} (0-based offset)
+                {t('options.relative')} {t('settings.relative_format_hint')}
               </Label>
             </div>
             <div className="flex items-center gap-2">
               <RadioGroupItem value="absolute" id="fmt-abs" />
               <Label htmlFor="fmt-abs" className="font-normal cursor-pointer">
-                {t('options.absolute')} (40001/30001/…)
+                {t('options.absolute')} {t('settings.absolute_format_hint')}
               </Label>
             </div>
           </RadioGroup>
@@ -615,11 +600,10 @@ function AddressingCard(): React.JSX.Element {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <Label htmlFor="set-color-mem">
-              {/* i18n key wished: settings.color_code_memory */}
-              Color-code memory areas
+              {t('settings.color_code_memory')}
             </Label>
             <p className="text-muted-foreground text-xs">
-              Show colored badges for coil/discrete/input/holding memory areas.
+              {t('settings.color_code_memory_desc')}
             </p>
           </div>
           <Switch
@@ -633,11 +617,10 @@ function AddressingCard(): React.JSX.Element {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <Label htmlFor="set-prefix">
-              {/* i18n key wished: settings.show_prefix */}
-              Show prefix
+              {t('settings.show_prefix')}
             </Label>
             <p className="text-muted-foreground text-xs">
-              Prefix addresses with area code (4/3/0/1).
+              {t('settings.show_prefix_desc')}
             </p>
           </div>
           <Switch
@@ -652,20 +635,21 @@ function AddressingCard(): React.JSX.Element {
         {/* Live preview */}
         <div className="space-y-2">
           <Label>
-            {/* i18n key wished: settings.preview */}
-            Live preview
+            {t('settings.preview')}
           </Label>
           <div className="bg-muted/40 rounded-md border p-3">
             <div className="space-y-1.5">
               {previewAreas.map((area) => {
                 const formatted = formatAddress(0, area, settings);
+                const areaKey = `memory.${area === 'holding' ? 'holding_register' : area === 'input' ? 'input_register' : area === 'coil' ? 'coil' : 'discrete_input'}`;
+                const areaText = t(areaKey);
                 return (
                   <div
                     key={area}
                     className="flex items-center justify-between gap-2 text-sm"
                   >
                     <span className="text-muted-foreground">
-                      {AREA_LABEL[area]} 0
+                      {areaText} 0
                     </span>
                     {settings.colorCodeMemory ? (
                       <Badge
@@ -713,17 +697,17 @@ function RegisterMapCard(): React.JSX.Element {
       const { entries, errors } = parseRegisterCsv(text);
       setRowErrors(errors);
       if (entries.length === 0 && errors.length > 0) {
-        setError(errors[0] ?? 'No valid entries found.');
+        setError(errors[0] ?? t('settings.no_register_map'));
         return;
       }
       if (entries.length === 0) {
-        setError('No valid entries found in CSV.');
+        setError(t('settings.no_register_map'));
         return;
       }
       setError(null);
       loadRegisterMap(entries);
     },
-    [loadRegisterMap],
+    [loadRegisterMap, t],
   );
 
   /** Handle a File from input or drop. */
@@ -732,17 +716,18 @@ function RegisterMapCard(): React.JSX.Element {
       if (!file.name.toLowerCase().endsWith('.csv') &&
           file.type !== 'text/csv' &&
           file.type !== 'application/vnd.ms-excel') {
-        setError('Please upload a .csv file.');
+        setError(t('settings.please_upload_csv'));
         return;
       }
       try {
         const text = await readFileAsText(file);
         applyCsv(text);
       } catch (e) {
-        setError(`Failed to read file: ${e instanceof Error ? e.message : String(e)}`);
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(t('toast.file_read_failed', { error: msg }));
       }
     },
-    [applyCsv],
+    [applyCsv, t],
   );
 
   const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -761,7 +746,7 @@ function RegisterMapCard(): React.JSX.Element {
 
   const onPasteLoad = () => {
     if (!pasteText.trim()) {
-      setError('Paste some CSV first.');
+      setError(t('settings.paste_csv'));
       return;
     }
     applyCsv(pasteText);
@@ -786,12 +771,10 @@ function RegisterMapCard(): React.JSX.Element {
           {t('options.register_map')}
         </CardTitle>
         <CardDescription>
-          Map register addresses to human-readable names, units, scaling and
-          per-register data-type overrides. CSV header required:{' '}
+          {t('options.register_map')} — CSV:{' '}
           <code className="bg-muted rounded px-1 py-0.5 text-xs">
             {CSV_ALL_COLUMNS.join(',')}
           </code>
-          .
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -813,10 +796,10 @@ function RegisterMapCard(): React.JSX.Element {
           <Upload className="text-muted-foreground size-6" />
           <div className="space-y-1">
             <p className="text-sm font-medium">
-              Drag &amp; drop a CSV file here
+              {t('settings.drag_drop_csv')}
             </p>
             <p className="text-muted-foreground text-xs">
-              or click the button below to choose a file
+              {t('settings.drag_drop_csv_hint')}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -826,7 +809,7 @@ function RegisterMapCard(): React.JSX.Element {
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="size-3.5" />
-              Upload CSV
+              {t('settings.upload_csv')}
             </Button>
             <Button
               size="sm"
@@ -834,7 +817,7 @@ function RegisterMapCard(): React.JSX.Element {
               onClick={onDownloadTemplate}
             >
               <Download className="size-3.5" />
-              Download template
+              {t('settings.download_template')}
             </Button>
             {registerMap.length > 0 && (
               <Button
@@ -843,7 +826,7 @@ function RegisterMapCard(): React.JSX.Element {
                 onClick={onClear}
               >
                 <Trash2 className="size-3.5" />
-                Clear map
+                {t('settings.clear_map')}
               </Button>
             )}
           </div>
@@ -860,7 +843,7 @@ function RegisterMapCard(): React.JSX.Element {
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>CSV error</AlertTitle>
+            <AlertTitle>{t('settings.csv_error')}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -870,7 +853,7 @@ function RegisterMapCard(): React.JSX.Element {
           <Alert>
             <AlertCircle className="size-4" />
             <AlertTitle>
-              {rowErrors.length} warning{rowErrors.length === 1 ? '' : 's'}
+              {t('settings.warnings_count', { count: rowErrors.length })}
             </AlertTitle>
             <AlertDescription>
               <ul className="list-disc pl-4 text-xs">
@@ -878,7 +861,7 @@ function RegisterMapCard(): React.JSX.Element {
                   <li key={i}>{e}</li>
                 ))}
                 {rowErrors.length > 8 && (
-                  <li>…and {rowErrors.length - 8} more.</li>
+                  <li>{t('settings.and_more', { count: rowErrors.length - 8 })}</li>
                 )}
               </ul>
             </AlertDescription>
@@ -888,8 +871,7 @@ function RegisterMapCard(): React.JSX.Element {
         {/* Paste-CSV alternative */}
         <div className="space-y-2">
           <Label htmlFor="csv-paste">
-            {/* i18n key wished: settings.register_map.paste */}
-            Or paste CSV directly
+            {t('settings.paste_csv')}
           </Label>
           <Textarea
             id="csv-paste"
@@ -901,7 +883,7 @@ function RegisterMapCard(): React.JSX.Element {
           />
           <div className="flex gap-2">
             <Button size="sm" variant="secondary" onClick={onPasteLoad}>
-              Load pasted CSV
+              {t('settings.load_pasted_csv')}
             </Button>
             {pasteText && (
               <Button
@@ -909,7 +891,7 @@ function RegisterMapCard(): React.JSX.Element {
                 variant="ghost"
                 onClick={() => setPasteText('')}
               >
-                Clear
+                {t('settings.clear')}
               </Button>
             )}
           </div>
@@ -919,30 +901,29 @@ function RegisterMapCard(): React.JSX.Element {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>
-              {/* i18n key wished: settings.register_map.loaded */}
-              Loaded entries
+              {t('settings.loaded_entries')}
             </Label>
             <Badge variant="secondary">
-              {registerMap.length} register{registerMap.length === 1 ? '' : 's'} loaded
+              {t('settings.registers_loaded', { count: registerMap.length })}
             </Badge>
           </div>
           {registerMap.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              No register map loaded yet.
+              {t('settings.no_register_map')}
             </p>
           ) : (
             <div className="max-h-96 overflow-y-auto rounded-md border">
               <Table>
                 <TableHeader className="sticky top-0 bg-card">
                   <TableRow>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Scale</TableHead>
-                    <TableHead>Offset</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>ByteOrder</TableHead>
-                    <TableHead>Size</TableHead>
+                    <TableHead>{t('settings.table_address')}</TableHead>
+                    <TableHead>{t('settings.table_name')}</TableHead>
+                    <TableHead>{t('settings.table_unit')}</TableHead>
+                    <TableHead>{t('settings.table_scale')}</TableHead>
+                    <TableHead>{t('settings.table_offset')}</TableHead>
+                    <TableHead>{t('settings.table_type')}</TableHead>
+                    <TableHead>{t('settings.table_byteorder')}</TableHead>
+                    <TableHead>{t('settings.table_size')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -999,7 +980,7 @@ function ThemeCard(): React.JSX.Element {
   const onFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.json') &&
         file.type !== 'application/json') {
-      setError('Please upload a .json file.');
+      setError(t('settings.please_upload_json'));
       return;
     }
     try {
@@ -1016,9 +997,8 @@ function ThemeCard(): React.JSX.Element {
       const loaded = loadCustomTheme(obj as ThemeJSON);
       setTheme(loaded.id);
     } catch (e) {
-      setError(
-        `Failed to parse JSON: ${e instanceof Error ? e.message : String(e)}`,
-      );
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(t('settings.failed_to_parse_json', { error: msg }));
     }
   };
 
@@ -1031,7 +1011,7 @@ function ThemeCard(): React.JSX.Element {
   const onDownloadCurrent = () => {
     // Strip the runtime `id` so the file is a clean ThemeJSON template.
     const exportable: ThemeJSON = {
-      name: theme.name.startsWith('theme.') ? 'My Custom Theme' : theme.name,
+      name: theme.name.startsWith('theme.') ? t('settings.my_custom_theme') : theme.name,
       isDark: theme.isDark,
       colors: theme.colors,
     };
@@ -1047,11 +1027,10 @@ function ThemeCard(): React.JSX.Element {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Palette className="size-4" />
-          {/* i18n key wished: settings.theme */}
-          Theme
+          {t('settings.theme')}
         </CardTitle>
         <CardDescription>
-          Choose a built-in color scheme or upload a custom JSON theme.
+          {t('settings.theme_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -1071,12 +1050,12 @@ function ThemeCard(): React.JSX.Element {
                 <span>{t(td.name)}</span>
                 {td.isDark && (
                   <Badge variant="outline" className="ml-2 text-[10px]">
-                    dark
+                    {t('common.dark')}
                   </Badge>
                 )}
                 {td.isCustom && (
                   <Badge variant="secondary" className="ml-2 text-[10px]">
-                    custom
+                    {t('common.custom')}
                   </Badge>
                 )}
               </Label>
@@ -1089,8 +1068,7 @@ function ThemeCard(): React.JSX.Element {
         {/* Active theme swatch preview */}
         <div className="space-y-2">
           <Label>
-            {/* i18n key wished: settings.theme.swatch */}
-            Byte role colors (active theme)
+            {t('settings.byte_role_colors')}
           </Label>
           <div className="flex flex-wrap gap-2">
             {SWATCH_ROLES.map((role) => {
@@ -1128,8 +1106,7 @@ function ThemeCard(): React.JSX.Element {
             onClick={onDownloadCurrent}
           >
             <Download className="size-3.5" />
-            {/* i18n key wished: settings.theme.download_current */}
-            Download current theme
+            {t('settings.download_current_theme')}
           </Button>
           <input
             ref={fileInputRef}
@@ -1144,14 +1121,14 @@ function ThemeCard(): React.JSX.Element {
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>Theme load failed</AlertTitle>
+            <AlertTitle>{t('settings.theme_load_failed')}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
         {errors.length > 0 && (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>Invalid theme JSON</AlertTitle>
+            <AlertTitle>{t('settings.invalid_theme_json')}</AlertTitle>
             <AlertDescription>
               <ul className="list-disc pl-4 text-xs">
                 {errors.map((e, i) => (
@@ -1181,14 +1158,14 @@ function LanguageCard(): React.JSX.Element {
   const onFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.json') &&
         file.type !== 'application/json') {
-      setError('Please upload a .json file.');
+      setError(t('settings.please_upload_json'));
       return;
     }
     try {
       const text = await readFileAsText(file);
       const obj: unknown = JSON.parse(text);
       if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
-        setError('Language file must be a flat JSON object { "key": "value" }.');
+        setError(t('settings.language_must_be_flat'));
         return;
       }
       const dict = obj as Record<string, unknown>;
@@ -1198,7 +1175,7 @@ function LanguageCard(): React.JSX.Element {
         if (typeof v === 'string') clean[k] = v;
       }
       if (Object.keys(clean).length === 0) {
-        setError('Language file contains no string key/value pairs.');
+        setError(t('settings.language_no_strings'));
         return;
       }
 
@@ -1207,17 +1184,17 @@ function LanguageCard(): React.JSX.Element {
       const code =
         typeof window !== 'undefined'
           ? window.prompt(
-              'Locale code (e.g. "de", "fr", "es"):',
+              t('settings.locale_code_prompt'),
               file.name.replace(/\.json$/i, '').toLowerCase().slice(0, 8),
             )
           : null;
       if (!code) {
-        setError('Locale code is required.');
+        setError(t('settings.locale_code_required'));
         return;
       }
       const name =
         typeof window !== 'undefined'
-          ? window.prompt('Locale display name (e.g. "Deutsch"):', code)
+          ? window.prompt(t('settings.locale_name_prompt'), code)
           : null;
       const safeName = name && name.length > 0 ? name : code;
 
@@ -1225,9 +1202,8 @@ function LanguageCard(): React.JSX.Element {
       setLocale(code);
       setError(null);
     } catch (e) {
-      setError(
-        `Failed to parse JSON: ${e instanceof Error ? e.message : String(e)}`,
-      );
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(t('settings.failed_to_parse_json', { error: msg }));
     }
   };
 
@@ -1240,7 +1216,7 @@ function LanguageCard(): React.JSX.Element {
   const onDownloadEn = () => {
     const en = getDictionary('en');
     if (!en) {
-      setError('English dictionary is unavailable.');
+      setError(t('settings.english_unavailable'));
       return;
     }
     downloadText(
@@ -1250,18 +1226,32 @@ function LanguageCard(): React.JSX.Element {
     );
   };
 
+  /** Download the test German dictionary that ships with the PWA. */
+  const onDownloadDe = async () => {
+    try {
+      const res = await fetch('test-de-dictionary.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      downloadText(
+        'test-de-dictionary.json',
+        text,
+        'application/json',
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(t('toast.file_read_failed', { error: msg }));
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Languages className="size-4" />
-          {/* i18n key wished: settings.language */}
           {t('locale.label')}
         </CardTitle>
         <CardDescription>
-          Choose a UI language or upload a translated JSON dictionary. You can
-          add new languages (e.g. Deutsch, Español) by uploading a translated
-          JSON file.
+          {t('settings.language_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -1284,7 +1274,7 @@ function LanguageCard(): React.JSX.Element {
                 </span>
                 {ld.isCustom && (
                   <Badge variant="secondary" className="ml-2 text-[10px]">
-                    custom
+                    {t('common.custom')}
                   </Badge>
                 )}
               </Label>
@@ -1302,8 +1292,7 @@ function LanguageCard(): React.JSX.Element {
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="size-3.5" />
-            {/* i18n key wished: settings.language.upload */}
-            Upload language file
+            {t('settings.language_upload')}
           </Button>
           <Button
             size="sm"
@@ -1311,8 +1300,15 @@ function LanguageCard(): React.JSX.Element {
             onClick={onDownloadEn}
           >
             <Download className="size-3.5" />
-            {/* i18n key wished: settings.language.download_en */}
-            Download EN dictionary
+            {t('settings.language_download_en')}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onDownloadDe}
+          >
+            <Download className="size-3.5" />
+            {t('settings.language_download_de')}
           </Button>
           <input
             ref={fileInputRef}
@@ -1327,7 +1323,7 @@ function LanguageCard(): React.JSX.Element {
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>Language load failed</AlertTitle>
+            <AlertTitle>{t('settings.language_load_failed')}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -1341,31 +1337,29 @@ function LanguageCard(): React.JSX.Element {
 /* ------------------------------------------------------------------ */
 
 function VendorFcsCard(): React.JSX.Element {
+  const { t } = useI18n();
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Code2 className="size-4" />
-          {/* i18n key wished: settings.vendor_fcs */}
-          Vendor Function Codes
+          {t('settings.vendor_fcs')}
         </CardTitle>
         <CardDescription>
-          Define custom function-code schemas with byte layouts.
+          {t('settings.vendor_fcs_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <Info className="size-4" />
-          <AlertTitle>Coming soon</AlertTitle>
+          <AlertTitle>{t('settings.coming_soon')}</AlertTitle>
           <AlertDescription>
-            Vendor-specific function code table coming in a future version.
-            You&rsquo;ll be able to define custom FC schemas with byte layouts
-            for non-standard devices.
+            {t('settings.vendor_fcs_soon')}
           </AlertDescription>
         </Alert>
         <Button size="sm" variant="outline" disabled>
           <Code2 className="size-3.5" />
-          Add vendor FC
+          {t('settings.add_vendor_fc')}
         </Button>
       </CardContent>
     </Card>
@@ -1383,33 +1377,29 @@ function AboutCard(): React.JSX.Element {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Info className="size-4" />
-          {/* i18n key wished: settings.about */}
-          About
+          {t('settings.about')}
         </CardTitle>
         <CardDescription>
-          {t('app.title')} — version {APP_VERSION}
+          {t('settings.about_version', { title: t('app.title'), version: APP_VERSION })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div className="space-y-1">
           <p className="text-muted-foreground">
-            A pure-TypeScript, dependency-light Modbus RTU/ASCII/TCP traffic
-            parser and frame builder.
+            {t('settings.about_desc')}
           </p>
           <ul className="text-muted-foreground list-disc pl-4 space-y-0.5">
             <li>
-              <span className="font-medium text-foreground">Tech stack:</span>{' '}
-              Next.js 16, TypeScript, Tailwind 4, shadcn/ui, pure-TS Modbus &amp;
-              pcap parsers.
+              <span className="font-medium text-foreground">{t('settings.about_tech_stack')}</span>{' '}
+              {t('settings.about_tech_stack_desc')}
             </li>
             <li>
-              <span className="font-medium text-foreground">PWA:</span>{' '}
-              installable, works offline.
+              <span className="font-medium text-foreground">{t('settings.about_pwa')}</span>{' '}
+              {t('settings.about_pwa_desc')}
             </li>
             <li>
-              <span className="font-medium text-foreground">Zero-runtime-deps</span>{' '}
-              for the core parser — CRC-16, LRC-8, MBAP, register decoder all
-              hand-rolled.
+              <span className="font-medium text-foreground">{t('settings.about_zero_deps')}</span>{' '}
+              {t('settings.about_zero_deps_desc')}
             </li>
           </ul>
         </div>
@@ -1417,7 +1407,7 @@ function AboutCard(): React.JSX.Element {
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" variant="outline">
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
-              GitHub
+              {t('settings.github')}
             </a>
           </Button>
           <Button asChild size="sm" variant="outline">
@@ -1426,7 +1416,7 @@ function AboutCard(): React.JSX.Element {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Modbus Spec (PDF)
+              {t('settings.modbus_spec_pdf')}
             </a>
           </Button>
         </div>

@@ -42,11 +42,11 @@ export function InputPanel() {
       try {
         const frames = parseTextInput(text, settings);
         if (frames.length === 0) {
-          setParseError('No frames could be parsed from the input.');
-          toast.error('No frames parsed');
+          setParseError(t('toast.no_frames_parsed'));
+          toast.error(t('toast.no_frames_parsed_short'));
         } else {
           setFrames(frames);
-          toast.success(`${frames.length} frame${frames.length === 1 ? '' : 's'} parsed`);
+          toast.success(t('toast.frames_parsed', { count: frames.length }));
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -71,12 +71,13 @@ export function InputPanel() {
       try {
         const text = await file.text();
         setInput(text, 'file');
-        toast.success(`Loaded ${file.name}`);
+        toast.success(t('toast.file_loaded', { name: file.name }));
       } catch (e) {
-        toast.error(`Failed to read file: ${e instanceof Error ? e.message : String(e)}`);
+        const msg = e instanceof Error ? e.message : String(e);
+        toast.error(t('toast.file_read_failed', { error: msg }));
       }
     },
-    [setInput],
+    [setInput, t],
   );
 
   const handlePcapUpload = useCallback(
@@ -88,8 +89,8 @@ export function InputPanel() {
           try {
             const result = parsePcapBuffer(buf, settings, selectedPort);
             if (result.frames.length === 0) {
-              setParseError('No Modbus frames found in pcap.');
-              toast.error('No Modbus frames found');
+              setParseError(t('toast.no_modbus_frames_long'));
+              toast.error(t('toast.no_modbus_frames'));
             } else {
               setFrames(result.frames, {
                 ports: result.ports,
@@ -100,26 +101,27 @@ export function InputPanel() {
                 setDetectedPorts(result.ports[0]);
               }
               if (result.warnings.length > 0) {
-                toast.message(`${result.warnings.length} warning(s)`, {
+                toast.message(t('toast.warnings', { count: result.warnings.length }), {
                   description: result.warnings[0],
                 });
               }
-              toast.success(`${result.frames.length} frames from ${result.flowsCount} flow(s)`);
+              toast.success(t('toast.pcap_parsed', { frames: result.frames.length, flows: result.flowsCount }));
             }
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             setParseError(msg);
-            toast.error(`PCAP parse error: ${msg}`);
+            toast.error(t('toast.pcap_parse_error', { error: msg }));
           } finally {
             setParsing(false);
           }
         }, 10);
       } catch (e) {
         setParsing(false);
-        toast.error(`Failed to read pcap: ${e instanceof Error ? e.message : String(e)}`);
+        const msg = e instanceof Error ? e.message : String(e);
+        toast.error(t('toast.pcap_read_failed', { error: msg }));
       }
     },
-    [settings, selectedPort, setFrames, setParseError, setParsing, setDetectedPorts],
+    [settings, selectedPort, setFrames, setParseError, setParsing, setDetectedPorts, t],
   );
 
   const handleDrop = useCallback(
@@ -140,7 +142,7 @@ export function InputPanel() {
   return (
     <div className="rounded-lg border border-border bg-surface p-3 sm:p-4">
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="text-sm font-medium whitespace-nowrap">{t('input.paste_hex')} / ASCII / pcap</span>
+        <span className="text-sm font-medium whitespace-nowrap">{t('input.input_label')}</span>
         <div className="flex-1" />
         <Tooltip>
           <TooltipTrigger asChild>
@@ -225,7 +227,7 @@ export function InputPanel() {
           <div className="absolute inset-0 flex items-center justify-center bg-accent/10 pointer-events-none">
             <div className="flex flex-col items-center gap-2 text-accent-foreground">
               <FileText className="h-8 w-8" />
-              <span className="text-sm font-medium">Drop file…</span>
+              <span className="text-sm font-medium">{t('input.drop_file')}</span>
             </div>
           </div>
         )}

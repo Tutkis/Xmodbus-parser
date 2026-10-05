@@ -56,7 +56,7 @@ export function FilterBar() {
           </span>
         )}
         <span className="text-xs text-muted-foreground hidden sm:inline">
-          {filterCombinator.toUpperCase()} logic
+          {t('filter.logic_label', { logic: filterCombinator.toUpperCase() })}
         </span>
         <div className="flex-1" />
         {filterRules.length > 0 && (
@@ -96,7 +96,7 @@ export function FilterBar() {
           >
             <Plus className="h-3 w-3" />
             <span className="hidden sm:inline">{t('filter.add_rule')}</span>
-            <span className="sm:hidden">Add</span>
+            <span className="sm:hidden">{t('filter.add_short')}</span>
           </Button>
         </div>
 
@@ -104,7 +104,7 @@ export function FilterBar() {
           <div className="flex items-start gap-2 py-1 text-xs text-muted-foreground">
             <Zap className="h-3 w-3 shrink-0 mt-0.5" />
             <span className="min-w-0">
-              No filters. Click "{t('filter.add_rule')}" to filter by station, function, register, value, direction, or status.
+              {t('filter.no_filters_hint', { action: t('filter.add_rule') })}
             </span>
           </div>
         ) : (
@@ -143,7 +143,7 @@ function FilterRow({
   combinator: 'and' | 'or';
   onChange: (patch: Partial<FilterRule>) => void;
   onRemove: () => void;
-  t: (k: string) => string;
+  t: (k: string, params?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -188,7 +188,7 @@ function FilterRow({
       <Input
         value={rule.value}
         onChange={(e) => onChange({ value: e.target.value })}
-        placeholder="value…"
+        placeholder={t('filter.value_placeholder')}
         className="h-7 flex-1 min-w-[100px] font-mono text-xs"
       />
       <Button
@@ -196,7 +196,7 @@ function FilterRow({
         size="sm"
         className="h-7 w-7 p-0 shrink-0"
         onClick={onRemove}
-        aria-label="Remove rule"
+        aria-label={t('filter.remove_rule')}
       >
         <Trash2 className="h-3 w-3" />
       </Button>

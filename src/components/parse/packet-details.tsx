@@ -36,7 +36,7 @@ export function PacketDetails({ onHoverField, onSelectField }: Props) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center">
         <div className="text-muted-foreground text-sm">
-          {t('pane.details')} — select a frame
+          {t('pane.details_hint', { title: t('pane.details') })}
         </div>
       </div>
     );
@@ -66,7 +66,7 @@ export function PacketDetails({ onHoverField, onSelectField }: Props) {
         </span>
         {frame.isException && (
           <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] text-red-600 dark:text-red-400">
-            EXCEPTION
+            {t('details.exception_badge')}
           </span>
         )}
       </div>
@@ -97,12 +97,12 @@ interface TreeNodeData {
   isError?: boolean;
 }
 
-function buildTree(frame: ParsedFrame, t: (k: string) => string): TreeNodeData {
+function buildTree(frame: ParsedFrame, t: (k: string, params?: Record<string, string | number>) => string): TreeNodeData {
   const fc = frame.functionCode;
-  const fcName = fc !== undefined ? functionCodeName(fc, t) : 'Unknown';
+  const fcName = fc !== undefined ? functionCodeName(fc, t) : t('details.unknown_fc');
   const station = frame.slaveAddress ?? frame.unitId;
   const excName = frame.isException && frame.exceptionCode !== undefined
-    ? EXCEPTION_CODES[frame.exceptionCode]?.name ?? `Code ${frame.exceptionCode}`
+    ? EXCEPTION_CODES[frame.exceptionCode]?.name ?? t('details.exception_code_value', { code: frame.exceptionCode })
     : null;
 
   const children: TreeNodeData[] = [];
@@ -120,8 +120,8 @@ function buildTree(frame: ParsedFrame, t: (k: string) => string): TreeNodeData {
     if (uF) mbapChildren.push(toNode(uF, t));
     children.push({
       id: 'mbap',
-      label: 'MBAP Header',
-      value: `Tx ${frame.transactionId ?? '—'}`,
+      label: t('details.mbap_header'),
+      value: t('details.tx_value', { id: frame.transactionId ?? '—' }),
       children: mbapChildren,
     });
   } else {
@@ -129,7 +129,7 @@ function buildTree(frame: ParsedFrame, t: (k: string) => string): TreeNodeData {
     if (addrF) {
       children.push({
         ...toNode(addrF, t),
-        label: frame.protocol === 'ascii' ? 'Slave Address' : 'Slave Address',
+        label: t('field.slave_address'),
       });
     }
   }
@@ -139,14 +139,14 @@ function buildTree(frame: ParsedFrame, t: (k: string) => string): TreeNodeData {
   if (fcField) {
     children.push({
       id: 'fc',
-      label: 'Function Code',
+      label: t('field.function_code'),
       value: `0x${(fc ?? 0).toString(16).padStart(2, '0').toUpperCase()} — ${fcName}`,
       field: fcField,
       isException: frame.isException,
       children: frame.isException && frame.exceptionCode !== undefined
         ? [{
             id: 'exc_code',
-            label: 'Exception Code',
+            label: t('field.exception_code'),
             value: `0x${frame.exceptionCode.toString(16).padStart(2, '0').toUpperCase()} — ${excName}`,
             isError: true,
           }]
@@ -167,8 +167,8 @@ function buildTree(frame: ParsedFrame, t: (k: string) => string): TreeNodeData {
   if (pduFields.length > 0) {
     children.push({
       id: 'pdu',
-      label: 'PDU Data',
-      value: `${pduFields.length} field(s)`,
+      label: t('details.pdu_data'),
+      value: t('details.field_count', { count: pduFields.length }),
       children: pduFields.map((f) => toNode(f, t)),
     });
   }
@@ -178,9 +178,9 @@ function buildTree(frame: ParsedFrame, t: (k: string) => string): TreeNodeData {
     const crcValid = frame.crcValid;
     children.push({
       id: 'checksum',
-      label: 'CRC-16',
+      label: t('details.crc_16'),
       value: frame.crc !== undefined
-        ? `0x${frame.crc.toString(16).padStart(4, '0').toUpperCase()} ${crcValid ? '✓' : '✗ INVALID'}`
+        ? `0x${frame.crc.toString(16).padStart(4, '0').toUpperCase()} ${crcValid ? '✓' : t('details.checksum_invalid')}`
         : '—',
       isError: crcValid === false,
     });
@@ -188,39 +188,38 @@ function buildTree(frame: ParsedFrame, t: (k: string) => string): TreeNodeData {
     const lrcValid = frame.lrcValid;
     children.push({
       id: 'checksum',
-      label: 'LRC-8',
+      label: t('details.lrc_8'),
       value: frame.lrc !== undefined
-        ? `0x${frame.lrc.toString(16).padStart(2, '0').toUpperCase()} ${lrcValid ? '✓' : '✗ INVALID'}`
+        ? `0x${frame.lrc.toString(16).padStart(2, '0').toUpperCase()} ${lrcValid ? '✓' : t('details.checksum_invalid')}`
         : '—',
       isError: lrcValid === false,
     });
   }
 
   // Status row
-  const statusLabel: Record<string, string> = {
-    valid: 'Valid',
-    invalid_crc: 'Invalid CRC',
-    invalid_lrc: 'Invalid LRC',
-    truncated: 'Truncated',
-    malformed: 'Malformed',
-    exception: 'Exception Response',
-  };
+  const statusKey = `frame.${frame.status}`;
+  const statusText = t(statusKey);
+  const statusValue = statusText === statusKey ? frame.status : statusText;
   children.push({
     id: 'meta',
-    label: 'Meta',
-    value: `${statusLabel[frame.status] ?? frame.status} · ${frame.raw.length} bytes`,
+    label: t('details.meta'),
+    value: t('details.meta_value', { status: statusValue, bytes: frame.raw.length }),
     isError: frame.status !== 'valid' && frame.status !== 'exception',
   });
 
+  const directionKey = `direction.${frame.direction}`;
+  const directionText = t(directionKey);
+  const directionValue = directionKey === directionText ? frame.direction : directionText;
+
   return {
     id: 'root',
-    label: `${frame.protocol.toUpperCase()} ${frame.direction === 'unknown' ? '' : frame.direction}`,
-    value: station !== undefined ? `station ${station}` : undefined,
+    label: `${frame.protocol.toUpperCase()} ${frame.direction === 'unknown' ? '' : directionValue}`,
+    value: station !== undefined ? t('details.station_value', { id: station }) : undefined,
     children,
   };
 }
 
-function toNode(field: ParsedField, t: (k: string) => string): TreeNodeData {
+function toNode(field: ParsedField, t: (k: string, params?: Record<string, string | number>) => string): TreeNodeData {
   return {
     id: field.name + field.startOffset,
     label: field.label || t(field.name) || field.name,
@@ -238,7 +237,7 @@ interface TreeNodeProps {
   selectedFieldName: string | null;
   onSelectField: (f: ParsedField | null) => void;
   onHoverField?: (f: ParsedField | null) => void;
-  t: (k: string) => string;
+  t: (k: string, params?: Record<string, string | number>) => string;
 }
 
 function TreeNode({

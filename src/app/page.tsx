@@ -71,7 +71,7 @@ export default function Page() {
                 <span className="font-mono font-semibold text-foreground">
                   {framesCount}
                 </span>
-                <span className="text-muted-foreground">frames</span>
+                <span className="text-muted-foreground">{t('header.frames')}</span>
               </div>
             )}
 
@@ -87,7 +87,7 @@ export default function Page() {
                       <span>{l.name}</span>
                       {l.isCustom && (
                         <span className="rounded bg-accent px-1 text-[10px] text-accent-foreground">
-                          custom
+                          {t('common.custom')}
                         </span>
                       )}
                     </span>
@@ -98,8 +98,8 @@ export default function Page() {
 
             {/* Theme selector */}
             <Select value={theme.id} onValueChange={(v) => setTheme(v)}>
-              <SelectTrigger className="h-8 w-[100px] sm:w-[140px] px-2 text-xs shrink-0" aria-label="Theme">
-                <SelectValue placeholder="Theme" />
+              <SelectTrigger className="h-8 w-[100px] sm:w-[140px] px-2 text-xs shrink-0" aria-label={t('header.theme')}>
+                <SelectValue placeholder={t('header.theme')} />
               </SelectTrigger>
               <SelectContent>
                 {listThemes().map((th) => (
@@ -111,7 +111,7 @@ export default function Page() {
                       <span>{th.name.startsWith('theme.') ? t(th.name) : th.name}</span>
                       {th.isCustom && (
                         <span className="rounded bg-accent px-1 text-[10px] text-accent-foreground">
-                          custom
+                          {t('common.custom')}
                         </span>
                       )}
                     </span>
@@ -133,13 +133,13 @@ export default function Page() {
                     href="https://github.com"
                     target="_blank"
                     rel="noreferrer"
-                    aria-label="GitHub"
+                    aria-label={t('header.github')}
                   >
                     <Github className="h-4 w-4" />
                   </a>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>GitHub</TooltipContent>
+              <TooltipContent>{t('header.github')}</TooltipContent>
             </Tooltip>
           </div>
 
@@ -150,7 +150,7 @@ export default function Page() {
               onValueChange={(v) => setTab(v as TabId)}
               className="w-full"
             >
-              <TabsList className="bg-transparent h-10 p-0 rounded-none border-b border-transparent w-full justify-start gap-1 overflow-x-auto scrollbar-none">
+              <TabsList className="bg-transparent h-10 p-0 rounded-none border-b border-transparent w-full justify-start gap-1 overflow-x-auto scrollbar-hide sm:overflow-visible">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -191,11 +191,11 @@ export default function Page() {
         <footer className="mt-auto border-t border-border bg-surface">
           <div className="mx-auto max-w-[1600px] px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-mono shrink-0">Modbus Analyzer</span>
+              <span className="font-mono shrink-0">{t('app.title')}</span>
               <span className="shrink-0 font-mono text-accent/80">v{APP_VERSION}</span>
               <span className="hidden sm:inline">·</span>
               <span className="hidden sm:inline truncate">
-                RTU / ASCII / TCP · pcap & pcapng · offline-first PWA
+                {t('footer.tagline')}
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -205,10 +205,10 @@ export default function Page() {
                 rel="noreferrer"
                 className="hover:text-foreground transition-colors underline-offset-2 hover:underline"
               >
-                Changelog
+                {t('footer.changelog')}
               </a>
               <span className="hidden md:inline">·</span>
-              <span className="hidden md:inline">CRC-16 / LRC-8 verified</span>
+              <span className="hidden md:inline">{t('footer.crc_verified')}</span>
             </div>
           </div>
         </footer>

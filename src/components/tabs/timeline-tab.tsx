@@ -124,7 +124,7 @@ export function TimelineTab(): React.JSX.Element {
   const handleExportPdf = () => {
     toast({
       title: t('timeline.title'),
-      description: 'PDF export coming soon',
+      description: t('timeline.pdf_export_soon'),
     });
   };
 
@@ -147,8 +147,7 @@ export function TimelineTab(): React.JSX.Element {
               className="mt-1 text-xs"
               style={{ color: theme.colors.textMuted }}
             >
-              No frames parsed yet. Switch to the Parse tab to load some
-              Modbus traffic.
+              {t('timeline.empty_hint')}
             </div>
           </div>
           <Button size="sm" onClick={() => setTab('parse')}>
@@ -173,7 +172,7 @@ export function TimelineTab(): React.JSX.Element {
         {/* Summary stats */}
         <div className="flex flex-wrap items-center gap-1.5">
           <StatBadge
-            label="Total"
+            label={t('timeline.total')}
             value={stats.total}
             color={theme.colors.text}
             bg={theme.colors.surfaceAlt}
@@ -195,7 +194,7 @@ export function TimelineTab(): React.JSX.Element {
           />
           {stats.exceptions > 0 && (
             <StatBadge
-              label="Exceptions"
+              label={t('timeline.exceptions')}
               value={stats.exceptions}
               color={theme.colors.roles.exception_flag?.fg ?? '#dc2626'}
               bg={theme.colors.exceptionBg}
@@ -204,7 +203,7 @@ export function TimelineTab(): React.JSX.Element {
           )}
           {stats.unknown > 0 && (
             <StatBadge
-              label="Unknown"
+              label={t('timeline.unknown')}
               value={stats.unknown}
               color={theme.colors.textMuted}
               bg={theme.colors.surfaceAlt}
@@ -227,12 +226,12 @@ export function TimelineTab(): React.JSX.Element {
                   className="h-7 w-7"
                   onClick={zoomOut}
                   disabled={zoom <= TIMELINE_ZOOM_MIN}
-                  aria-label="Zoom out"
+                  aria-label={t('timeline.zoom_out')}
                 >
                   <Minus className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Zoom out</TooltipContent>
+              <TooltipContent>{t('timeline.zoom_out')}</TooltipContent>
             </Tooltip>
 
             <Slider
@@ -242,7 +241,7 @@ export function TimelineTab(): React.JSX.Element {
               step={5}
               value={[Math.round(zoom * 100)]}
               onValueChange={(v) => setZoom(v[0] / 100)}
-              aria-label="Zoom level"
+              aria-label={t('timeline.zoom_level')}
             />
 
             <Tooltip>
@@ -253,12 +252,12 @@ export function TimelineTab(): React.JSX.Element {
                   className="h-7 w-7"
                   onClick={zoomIn}
                   disabled={zoom >= TIMELINE_ZOOM_MAX}
-                  aria-label="Zoom in"
+                  aria-label={t('timeline.zoom_in')}
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Zoom in</TooltipContent>
+              <TooltipContent>{t('timeline.zoom_in')}</TooltipContent>
             </Tooltip>
 
             <span
@@ -283,13 +282,13 @@ export function TimelineTab(): React.JSX.Element {
                 size="sm"
                 className="h-7 px-2"
                 onClick={zoomFit}
-                aria-label="Fit to container"
+                aria-label={t('timeline.fit_to_container')}
               >
                 <Maximize className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline ml-1 text-xs">Fit</span>
+                <span className="hidden sm:inline ml-1 text-xs">{t('timeline.fit')}</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Fit to container</TooltipContent>
+            <TooltipContent>{t('timeline.fit_to_container')}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -299,13 +298,13 @@ export function TimelineTab(): React.JSX.Element {
                 size="sm"
                 className="h-7 px-2"
                 onClick={zoom100}
-                aria-label="Reset to 100%"
+                aria-label={t('timeline.reset_100')}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline ml-1 text-xs">100%</span>
+                <span className="hidden sm:inline ml-1 text-xs">{t('timeline.pct_100')}</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Reset to 100%</TooltipContent>
+            <TooltipContent>{t('timeline.reset_100')}</TooltipContent>
           </Tooltip>
 
           <Separator
@@ -322,7 +321,7 @@ export function TimelineTab(): React.JSX.Element {
             onClick={handleExportPdf}
           >
             <Download className="h-3.5 w-3.5" />
-            <span className="text-xs">Export PDF</span>
+            <span className="text-xs">{t('timeline.export_pdf')}</span>
           </Button>
         </div>
       </div>
@@ -342,8 +341,7 @@ export function TimelineTab(): React.JSX.Element {
             style={{ color: theme.colors.roles.exception_flag?.fg ?? '#dc2626' }}
           />
           <span>
-            Rendering first {MAX_RENDERED_FRAMES} frames for performance
-            ({frames.length} total).
+            {t('timeline.truncation_warning', { shown: MAX_RENDERED_FRAMES, total: frames.length })}
           </span>
         </div>
       )}

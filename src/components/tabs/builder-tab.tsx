@@ -493,17 +493,6 @@ export function BuilderTab() {
   const [copiedHex, setCopiedHex] = useState(false);
   const [copiedAscii, setCopiedAscii] = useState(false);
 
-  /**
-   * Translate with an inline English fallback. The `t()` from useI18n
-   * returns the raw key string when a key is missing from the dictionary;
-   * for keys not yet added to `en.ts` we pass a fallback so the UI never
-   * shows e.g. "builder.direction" verbatim.
-   */
-  function tt(key: string, fallback: string): string {
-    const v = t(key);
-    return v === key ? fallback : v;
-  }
-
   /** Convenience patch helper. */
   function patch(p: Partial<BuilderState>): void {
     setState((s) => ({ ...s, ...p }));
@@ -515,7 +504,7 @@ export function BuilderTab() {
 
   const built = useMemo(() => {
     const { options, error: optsErr } = stateToOptions(state);
-    if (!options) return { error: optsErr ?? 'Invalid input', hex: '', ascii: '', parsed: null };
+    if (!options) return { error: optsErr ?? t('builder.invalid_input'), hex: '', ascii: '', parsed: null };
     try {
       const frame = buildFrame(options);
       let hex = '';
@@ -572,7 +561,7 @@ export function BuilderTab() {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${label} copied`);
+      toast.success(t('toast.copied', { label }));
       if (kind === 'hex') {
         setCopiedHex(true);
         setTimeout(() => setCopiedHex(false), 1500);
@@ -581,7 +570,7 @@ export function BuilderTab() {
         setTimeout(() => setCopiedAscii(false), 1500);
       }
     } catch {
-      toast.error('Clipboard unavailable');
+      toast.error(t('toast.clipboard_unavailable'));
     }
   }
 
@@ -591,7 +580,7 @@ export function BuilderTab() {
     const text = state.protocol === 'ascii' ? built.ascii : built.hex;
     setInput(text, 'sample');
     setTab('parse');
-    toast.success('Sent to Parse tab');
+    toast.success(t('toast.sent_to_parse'));
   }
 
   /* -------------------------------------------------------------- */
@@ -647,7 +636,7 @@ export function BuilderTab() {
         {/* Protocol + Direction */}
         <Card className="gap-4">
           <CardHeader className="pb-0">
-            <CardTitle className="text-sm">{t('builder.protocol')} &amp; {tt('builder.direction', 'Direction')}</CardTitle>
+            <CardTitle className="text-sm">{t('builder.protocol')} &amp; {t('builder.direction')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label={t('builder.protocol')}>
@@ -662,9 +651,9 @@ export function BuilderTab() {
                 ]}
               />
             </Field>
-            <Field label={tt('builder.direction', 'Direction')}>
+            <Field label={t('builder.direction')}>
               <SegmentedControl<Direction>
-                ariaLabel={tt('builder.direction', 'Direction')}
+                ariaLabel={t('builder.direction')}
                 value={state.direction}
                 onValueChange={(v) => patch({ direction: v })}
                 options={[
@@ -694,7 +683,7 @@ export function BuilderTab() {
                 />
               </Field>
               {isTcp ? (
-                <Field label={tt('builder.transaction_id', 'Transaction ID')} htmlFor="builder-txn">
+                <Field label={t('builder.transaction_id')} htmlFor="builder-txn">
                   <NumberInput
                     id="builder-txn"
                     value={state.transactionId}
@@ -723,7 +712,7 @@ export function BuilderTab() {
                     .map((code) => (
                       <SelectItem key={code} value={hex2(code)} className="font-mono">
                         <span className="text-muted-foreground">{hex2(code)}</span>
-                        <span className="ml-2">{functionCodeName(code)}</span>
+                        <span className="ml-2">{functionCodeName(code, t)}</span>
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -734,7 +723,7 @@ export function BuilderTab() {
               <Badge variant="outline" className="font-mono">
                 {hex2(fc)}
               </Badge>
-              <span>{functionCodeName(fc)}</span>
+              <span>{functionCodeName(fc, t)}</span>
             </div>
           </CardContent>
         </Card>
@@ -823,15 +812,15 @@ export function BuilderTab() {
                       max={65535}
                     />
                   </Field>
-                  <Field label="Coil ON / OFF">
+                  <Field label={t('builder.coil_on_off')}>
                     <div className="flex h-10 items-center gap-3 rounded-md border border-input px-3">
                       <Switch
                         checked={state.writeSingleCoilOn}
                         onCheckedChange={(v) => patch({ writeSingleCoilOn: v })}
-                        aria-label="Coil state"
+                        aria-label={t('builder.coil_state')}
                       />
                       <span className="font-mono text-sm">
-                        {state.writeSingleCoilOn ? '0xFF00 (ON)' : '0x0000 (OFF)'}
+                        {state.writeSingleCoilOn ? t('builder.coil_on') : t('builder.coil_off')}
                       </span>
                     </div>
                   </Field>
@@ -876,7 +865,7 @@ export function BuilderTab() {
                         max={65535}
                       />
                     </Field>
-                    <Field label={t('builder.quantity')} hint="Auto-derived from values if blank.">
+                    <Field label={t('builder.quantity')} hint={t('builder.quantity_hint')}>
                       <NumberInput
                         value={state.quantity}
                         onValueChange={(n) => patch({ quantity: n })}
@@ -888,8 +877,8 @@ export function BuilderTab() {
                   <Field
                     label={
                       fc === 0x0f
-                        ? 'Coil values (bits: 1 0 1 1, or hex bytes)'
-                        : 'Register values (hex, e.g. "0001 0002 0003")'
+                        ? t('builder.coil_values_hint')
+                        : t('builder.register_values_hint')
                     }
                     htmlFor="builder-wm-text"
                   >
@@ -907,9 +896,9 @@ export function BuilderTab() {
               {/* Read response data */}
               {showReadResponseData && (
                 <Field
-                  label="Response data (hex bytes)"
+                  label={t('builder.response_data')}
                   htmlFor="builder-resp"
-                  hint="Byte count is auto-computed from the data length."
+                  hint={t('builder.response_data_hint')}
                 >
                   <Textarea
                     id="builder-resp"
@@ -925,7 +914,7 @@ export function BuilderTab() {
               {showSubFunction && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
-                    label={fc === 0x2b ? 'MEI Type' : 'Sub-function'}
+                    label={fc === 0x2b ? t('builder.mei_type') : t('builder.sub_function')}
                     htmlFor="builder-sub"
                   >
                     <NumberInput
@@ -936,7 +925,7 @@ export function BuilderTab() {
                       max={65535}
                     />
                   </Field>
-                  <Field label="Sub data (hex)" htmlFor="builder-sub-data">
+                  <Field label={t('builder.sub_data')} htmlFor="builder-sub-data">
                     <Input
                       id="builder-sub-data"
                       className="h-10 font-mono text-xs"
@@ -950,7 +939,7 @@ export function BuilderTab() {
 
               {/* Raw PDU data for less-common FCs */}
               {showSubDataHex && (
-                <Field label="Raw PDU data (hex)" htmlFor="builder-raw-data">
+                <Field label={t('builder.raw_pdu_data')} htmlFor="builder-raw-data">
                   <Textarea
                     id="builder-raw-data"
                     className="font-mono text-xs min-h-[80px]"
@@ -990,7 +979,7 @@ export function BuilderTab() {
                   disabled={!built.hex}
                 >
                   <Send className="h-3.5 w-3.5" />
-                  Send to Parse
+                  {t('builder.send_to_parse')}
                 </Button>
               </div>
             </div>
@@ -1002,7 +991,7 @@ export function BuilderTab() {
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
-                  <div className="font-medium">Build error</div>
+                  <div className="font-medium">{t('builder.build_error')}</div>
                   <div className="mt-0.5 font-mono break-all">{built.error}</div>
                 </div>
               </div>
@@ -1011,7 +1000,7 @@ export function BuilderTab() {
             {/* Hex string */}
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Hex string</Label>
+                <Label className="text-xs text-muted-foreground">{t('builder.hex_string')}</Label>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -1020,7 +1009,7 @@ export function BuilderTab() {
                   disabled={!built.hex}
                 >
                   {copiedHex ? <ClipboardCheck className="h-3 w-3" /> : <Clipboard className="h-3 w-3" />}
-                  Copy
+                  {t('builder.copy_button')}
                 </Button>
               </div>
               <div className="rounded-md border border-border bg-surfaceAlt p-3 font-mono text-xs break-all min-h-[2.5rem]">
@@ -1031,7 +1020,7 @@ export function BuilderTab() {
             {/* ASCII representation */}
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">ASCII</Label>
+                <Label className="text-xs text-muted-foreground">{t('builder.ascii')}</Label>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -1040,7 +1029,7 @@ export function BuilderTab() {
                   disabled={!built.ascii || built.ascii === 'n/a'}
                 >
                   {copiedAscii ? <ClipboardCheck className="h-3 w-3" /> : <Clipboard className="h-3 w-3" />}
-                  Copy
+                  {t('builder.copy_button')}
                 </Button>
               </div>
               <div className="rounded-md border border-border bg-surfaceAlt p-3 font-mono text-xs break-all min-h-[2.5rem]">
@@ -1058,10 +1047,10 @@ export function BuilderTab() {
 
             {/* Wireshark-style hex dump */}
             <div className="grid gap-1.5">
-              <Label className="text-xs text-muted-foreground">Byte view</Label>
+              <Label className="text-xs text-muted-foreground">{t('builder.byte_view')}</Label>
               <div className="rounded-md border border-border bg-surfaceAlt p-3 overflow-x-auto">
                 {hexDumpLines.length === 0 ? (
-                  <div className="text-xs text-muted-foreground">No bytes</div>
+                  <div className="text-xs text-muted-foreground">{t('builder.no_bytes')}</div>
                 ) : (
                   <div className="font-mono text-[11px] leading-relaxed">
                     {hexDumpLines.map((line) => (
@@ -1100,7 +1089,7 @@ export function BuilderTab() {
             {/* Field-level summary */}
             {renderable && renderable.fields.length > 0 && (
               <div className="grid gap-1.5">
-                <Label className="text-xs text-muted-foreground">Fields</Label>
+                <Label className="text-xs text-muted-foreground">{t('builder.fields')}</Label>
                 <div className="rounded-md border border-border bg-surfaceAlt p-2 overflow-x-auto">
                   <table className="w-full text-[11px] font-mono">
                     <tbody>
@@ -1130,7 +1119,7 @@ export function BuilderTab() {
                 {state.direction}
               </Badge>
               <Badge variant="outline" className="font-mono">
-                FC {hex2(fc)}
+                {t('builder.fc_label', { code: hex2(fc) })}
               </Badge>
               {built.parsed && (
                 <Badge variant="outline" className="font-mono">
@@ -1138,7 +1127,7 @@ export function BuilderTab() {
                 </Badge>
               )}
               <span className="ml-auto">
-                {isAscii ? 'LRC auto' : isTcp ? 'MBAP len auto' : 'CRC-16 auto'}
+                {isAscii ? t('builder.lrc_auto') : isTcp ? t('builder.mbap_len_auto') : t('builder.crc_16_auto')}
               </span>
             </div>
           </CardContent>
