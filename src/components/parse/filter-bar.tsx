@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Filter, Plus, Trash2, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { Filter, Plus, Trash2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FIELDS: Array<{ value: FilterField; key: string }> = [
@@ -42,96 +42,88 @@ export function FilterBar() {
   const removeFilterRule = useAppStore((s) => s.removeFilterRule);
   const clearFilters = useAppStore((s) => s.clearFilters);
   const setFilterCombinator = useAppStore((s) => s.setFilterCombinator);
-  const [expanded, setExpanded] = useState(true);
 
   const activeCount = filterRules.filter((r) => r.enabled && r.value.trim()).length;
 
   return (
     <div className="rounded-lg border border-border bg-surface">
-      <div className="flex items-center gap-2 px-3 py-2">
-        <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <Filter className="h-3.5 w-3.5 text-accent" />
         <span className="text-sm font-medium">{t('filter.title')}</span>
         {activeCount > 0 && (
           <span className="rounded bg-accent px-1.5 py-0.5 text-[10px] text-accent-foreground">
             {activeCount}
           </span>
         )}
+        <span className="text-xs text-muted-foreground hidden sm:inline">
+          {filterCombinator.toUpperCase()} logic
+        </span>
         <div className="flex-1" />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1 text-xs"
-          onClick={() => setExpanded((e) => !e)}
-        >
-          {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-        </Button>
+        {filterRules.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-xs shrink-0"
+            onClick={clearFilters}
+          >
+            <Trash2 className="h-3 w-3" />
+            <span className="hidden sm:inline">{t('filter.clear')}</span>
+          </Button>
+        )}
       </div>
 
-      {expanded && (
-        <div className="border-t border-border p-3 space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-muted-foreground whitespace-nowrap">{t('filter.and')} / {t('filter.or')}:</span>
-            <Select
-              value={filterCombinator}
-              onValueChange={(v) => setFilterCombinator(v as 'and' | 'or')}
-            >
-              <SelectTrigger className="h-7 w-[70px] sm:w-[80px] text-xs shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="and">{t('filter.and')}</SelectItem>
-                <SelectItem value="or">{t('filter.or')}</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex-1" />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1 text-xs whitespace-nowrap shrink-0"
-              onClick={addFilterRule}
-            >
-              <Plus className="h-3 w-3" />
-              <span className="hidden sm:inline">{t('filter.add_rule')}</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-            {filterRules.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1 text-xs whitespace-nowrap shrink-0"
-                onClick={clearFilters}
-              >
-                <Trash2 className="h-3 w-3" />
-                <span className="hidden sm:inline">{t('filter.clear')}</span>
-              </Button>
-            )}
-          </div>
-
-          {filterRules.length === 0 ? (
-            <div className="flex items-start gap-2 py-2 text-xs text-muted-foreground">
-              <Zap className="h-3 w-3 shrink-0 mt-0.5" />
-              <span className="min-w-0">
-                No filters. Click "{t('filter.add_rule')}" to filter by station, function, register, value, direction, or status.
-              </span>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              {filterRules.map((rule, idx) => (
-                <FilterRow
-                  key={rule.id}
-                  rule={rule}
-                  index={idx}
-                  total={filterRules.length}
-                  combinator={filterCombinator}
-                  onChange={(patch) => updateFilterRule(rule.id, patch)}
-                  onRemove={() => removeFilterRule(rule.id)}
-                  t={t}
-                />
-              ))}
-            </div>
-          )}
+      <div className="p-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground whitespace-nowrap">{t('filter.and')} / {t('filter.or')}:</span>
+          <Select
+            value={filterCombinator}
+            onValueChange={(v) => setFilterCombinator(v as 'and' | 'or')}
+          >
+            <SelectTrigger className="h-7 w-[70px] sm:w-[80px] text-xs shrink-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="and">{t('filter.and')}</SelectItem>
+              <SelectItem value="or">{t('filter.or')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex-1" />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1 text-xs whitespace-nowrap shrink-0"
+            onClick={addFilterRule}
+          >
+            <Plus className="h-3 w-3" />
+            <span className="hidden sm:inline">{t('filter.add_rule')}</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
         </div>
-      )}
+
+        {filterRules.length === 0 ? (
+          <div className="flex items-start gap-2 py-1 text-xs text-muted-foreground">
+            <Zap className="h-3 w-3 shrink-0 mt-0.5" />
+            <span className="min-w-0">
+              No filters. Click "{t('filter.add_rule')}" to filter by station, function, register, value, direction, or status.
+            </span>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {filterRules.map((rule, idx) => (
+              <FilterRow
+                key={rule.id}
+                rule={rule}
+                index={idx}
+                total={filterRules.length}
+                combinator={filterCombinator}
+                onChange={(patch) => updateFilterRule(rule.id, patch)}
+                onRemove={() => removeFilterRule(rule.id)}
+                t={t}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

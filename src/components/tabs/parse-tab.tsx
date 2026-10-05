@@ -14,6 +14,8 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
+import { Button } from '@/components/ui/button';
+import { Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import type { ParsedField } from '@/lib/modbus';
 import { AlertTriangle } from 'lucide-react';
 
@@ -25,51 +27,71 @@ export function ParseTab() {
   const detectedPorts = useAppStore((s) => s.detectedPorts);
   const selectedPort = useAppStore((s) => s.selectedPort);
   const setSelectedPort = useAppStore((s) => s.setSelectedPort);
+  const filterRules = useAppStore((s) => s.filterRules);
   const [highlightedField, setHighlightedField] = useState<ParsedField | null>(null);
+  const [filterExpanded, setFilterExpanded] = useState(false);
+
+  const activeFilterCount = filterRules.filter((r) => r.enabled && r.value.trim()).length;
 
   return (
     <div className="space-y-3">
-      {/* Top: input + filter */}
-      <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-start">
-        <div className="space-y-3">
-          <InputPanel />
-          <FilterBar />
-        </div>
-        <div className="flex flex-col gap-2 lg:w-[180px]">
-          <div className="rounded-lg border border-border bg-surface p-3">
-            <div className="text-xs font-medium mb-2 text-muted-foreground">Export</div>
-            <ExportButtons />
-          </div>
-          {detectedPorts.length > 0 && (
-            <div className="rounded-lg border border-border bg-surface p-3 text-xs">
-              <div className="font-medium mb-1 text-muted-foreground">Detected ports</div>
-              <div className="flex flex-wrap gap-1">
-                {detectedPorts.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setSelectedPort(p)}
-                    className={`rounded px-2 py-0.5 font-mono transition-colors ${
-                      selectedPort === p
-                        ? 'bg-accent text-accent-foreground'
-                        : 'bg-surfaceAlt hover:bg-accent/30'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-              {selectedPort !== null && (
-                <button
-                  className="mt-2 text-[10px] text-muted-foreground hover:text-foreground underline"
-                  onClick={() => setSelectedPort(null)}
-                >
-                  show all ports
-                </button>
-              )}
-            </div>
+      {/* Input panel — full width */}
+      <InputPanel />
+
+      {/* Compact toolbar: export + filter toggle + detected ports */}
+      <div className="flex flex-wrap items-center gap-2">
+        <ExportButtons />
+
+        <div className="flex-1" />
+
+        {/* Filter toggle button */}
+        <Button
+          variant={filterExpanded ? 'default' : 'outline'}
+          size="sm"
+          className="h-8 gap-1.5 shrink-0"
+          onClick={() => setFilterExpanded((e) => !e)}
+        >
+          <Filter className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">{t('filter.title')}</span>
+          {activeFilterCount > 0 && (
+            <span className="rounded bg-accent-foreground/20 px-1 text-[10px] font-mono">
+              {activeFilterCount}
+            </span>
           )}
-        </div>
+          {filterExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        </Button>
+
+        {/* Detected ports (only when pcap loaded) */}
+        {detectedPorts.length > 0 && (
+          <div className="flex items-center gap-1 text-xs shrink-0">
+            <span className="text-muted-foreground hidden sm:inline">Ports:</span>
+            {detectedPorts.map((p) => (
+              <button
+                key={p}
+                onClick={() => setSelectedPort(p)}
+                className={`rounded px-1.5 py-0.5 font-mono transition-colors ${
+                  selectedPort === p
+                    ? 'bg-accent text-accent-foreground'
+                    : 'bg-surfaceAlt hover:bg-accent/30'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            {selectedPort !== null && (
+              <button
+                className="text-[10px] text-muted-foreground hover:text-foreground underline ml-1"
+                onClick={() => setSelectedPort(null)}
+              >
+                all
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Filter bar — collapsible */}
+      {filterExpanded && <FilterBar />}
 
       {/* Errors / warnings */}
       {parseError && (
@@ -96,7 +118,7 @@ export function ParseTab() {
 
       {/* 3-pane Wireshark-style view */}
       {frames.length > 0 ? (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden" style={{ height: 'calc(100vh - 380px)', minHeight: '380px' }}>
+        <div className="rounded-lg border border-border bg-surface overflow-hidden" style={{ height: 'calc(100vh - 340px)', minHeight: '380px' }}>
           <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Packet List */}
             <ResizablePanel defaultSize={32} minSize={20} maxSize={50}>

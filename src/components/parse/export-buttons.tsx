@@ -164,7 +164,7 @@ export function ExportButtons() {
     <div className="flex items-center gap-1">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={exportCsv}>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 shrink-0" onClick={exportCsv} disabled={frames.length === 0}>
             <FileSpreadsheet className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">CSV</span>
           </Button>
@@ -173,7 +173,7 @@ export function ExportButtons() {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={exportJson}>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 shrink-0" onClick={exportJson} disabled={frames.length === 0}>
             <FileJson className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">JSON</span>
           </Button>
@@ -182,7 +182,7 @@ export function ExportButtons() {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={exportPdf}>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 shrink-0" onClick={exportPdf} disabled={frames.length === 0}>
             <Download className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">PDF</span>
           </Button>

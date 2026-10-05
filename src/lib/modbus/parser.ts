@@ -343,6 +343,7 @@ function parseRtuFrame(
     direction,
     dataSection,
     dataStartOffset,
+    opts,
   );
 
   // Prepend address + function tokens, append CRC tokens.
@@ -487,6 +488,7 @@ function parseAsciiFrame(
     direction,
     dataSection,
     dataStartOffset,
+    opts,
   );
 
   const allTokens: ByteToken[] = [
@@ -674,6 +676,7 @@ function parseTcpFrame(
     direction,
     dataSection,
     dataStartOffset,
+    opts,
   );
 
   // MBAP tokens (7 bytes) + function + data.
@@ -779,6 +782,7 @@ function tokenizeDataSection(
   direction: ModbusDirection,
   dataSection: Uint8Array,
   dataStartOffset: number,
+  opts: ParseOptions = {},
 ): { tokens: ByteToken[]; fields: ParsedField[] } {
   const tokens: ByteToken[] = [];
   const fields: ParsedField[] = [];
@@ -821,7 +825,7 @@ function tokenizeDataSection(
     }
   }
 
-  walkSchema(schema, dataSection, dataStartOffset, tokens, fields, info, isException);
+  walkSchema(schema, dataSection, dataStartOffset, tokens, fields, info, isException, opts);
   return { tokens, fields };
 }
 
@@ -839,10 +843,58 @@ function walkSchema(
   fields: ParsedField[],
   info: FunctionCodeInfo,
   isException: boolean,
+  opts: ParseOptions = {},
 ): void {
   let pos = 0;
   const n = dataSection.length;
-  for (const field of schema) {
+  let i = 0;
+  while (i < schema.length) {
+    const field = schema[i];
+    // Detect hi/lo pair: current is *_hi, next is *_lo with same field name.
+    const next = schema[i + 1];
+    const isHiLoPair =
+      next &&
+      field.field === next.field &&
+      ((field.role === 'start_addr_hi' && next.role === 'start_addr_lo') ||
+        (field.role === 'quantity_hi' && next.role === 'quantity_lo') ||
+        (field.role === 'byte_count' && next.role === 'byte_count') // unlikely but handle
+      );
+
+    if (isHiLoPair) {
+      // Consume both bytes as a single 16-bit field.
+      const size = 2;
+      if (pos + size > n) {
+        // truncated — fall through to single-byte handling
+      } else {
+        const fieldBytes: number[] = [dataSection[pos], dataSection[pos + 1]];
+        const startOff = dataStartOffset + pos;
+        // Tokens for both bytes (preserves byte-level coloring).
+        for (let j = 0; j < size; j++) {
+          tokens.push({
+            offset: dataStartOffset + pos + j,
+            value: dataSection[pos + j],
+            role: j === 0 ? field.role : next.role,
+            field: field.field,
+            description: field.label,
+          });
+        }
+        pos += size;
+        const endOff = dataStartOffset + pos;
+        const combined = (fieldBytes[0] << 8) | fieldBytes[1];
+        fields.push({
+          name: field.field,
+          label: field.label,
+          startOffset: startOff,
+          endOffset: endOff,
+          bytes: fieldBytes,
+          value: combined,
+          displayValue: formatCombinedValue(field.role, combined, opts),
+        });
+        i += 2;
+        continue;
+      }
+    }
+
     let size = field.size;
     if (size === 0) {
       // Variable: rest of the data section.
@@ -875,6 +927,7 @@ function walkSchema(
       value: computeFieldValue(field, fieldBytes, info, isException),
       displayValue: formatFieldValue(field, fieldBytes, info, isException),
     });
+    i++;
   }
 
   // Trailing bytes beyond the schema (truncated variable tail).
@@ -886,6 +939,46 @@ function walkSchema(
     });
     pos++;
   }
+}
+
+/**
+ * Format a combined 16-bit value (hi/lo pair) with addressing settings.
+ *
+ * - For start_addr: shows hex + decimal + absolute address (40001/30001/…)
+ *   if `addressFormat === 'absolute'` per Modbus memory-area convention.
+ * - For quantity / byte_count: shows hex + decimal only.
+ */
+function formatCombinedValue(
+  hiRole: string,
+  combined: number,
+  opts: ParseOptions,
+): string {
+  const hex16 = '0x' + combined.toString(16).padStart(4, '0').toUpperCase();
+  const dec = combined.toString(10);
+
+  if (hiRole === 'start_addr_hi') {
+    // Apply addressing settings.
+    const baseOffset = opts.baseOffset ?? 0;
+    const addrFormat = opts.addressFormat ?? 'relative';
+    if (addrFormat === 'absolute') {
+      // Modbus memory area mapping:
+      //   FC 01/02 (coils/discrete) → 0x0000-0xFFFF maps to 1-9999
+      //   FC 03 (holding)           → 40001-49999
+      //   FC 04 (input)             → 30001-39999
+      // We don't have FC here; show generic 40001-style for holding (most common).
+      // The UI can refine via register map. Just apply baseOffset + 40001 offset.
+      const abs = combined + baseOffset + 40001;
+      return `${hex16} (${dec}) → ${abs}`;
+    }
+    // relative
+    const shown = combined + baseOffset;
+    return shown === combined
+      ? `${hex16} (${dec})`
+      : `${hex16} (${dec}) → ${shown}`;
+  }
+
+  // quantity / byte_count — just hex + decimal.
+  return `${hex16} (${dec})`;
 }
 
 /**
