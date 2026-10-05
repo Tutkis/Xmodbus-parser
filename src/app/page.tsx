@@ -40,7 +40,7 @@ export default function Page() {
       { id: 'timeline', icon: LineChart, label: t('app.tab.timeline') },
       { id: 'settings', icon: Settings, label: t('app.tab.settings') },
     ],
-    [t],
+    [t, locale],
   );
 
   return (

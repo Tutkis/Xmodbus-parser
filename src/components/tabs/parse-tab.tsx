@@ -125,18 +125,18 @@ export function ParseTab() {
               <PacketList />
             </ResizablePanel>
             <ResizableHandle withHandle />
-            {/* Right side: details + bytes */}
+            {/* Right side: bytes (top) + details (bottom) */}
             <ResizablePanel defaultSize={68} minSize={40}>
               <ResizablePanelGroup direction="vertical">
+                <ResizablePanel defaultSize={55} minSize={20}>
+                  <PacketBytes highlightedField={highlightedField} />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={45} minSize={20}>
                   <PacketDetails
                     onHoverField={setHighlightedField}
                     onSelectField={setHighlightedField}
                   />
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={55} minSize={20}>
-                  <PacketBytes highlightedField={highlightedField} />
                 </ResizablePanel>
               </ResizablePanelGroup>
             </ResizablePanel>
