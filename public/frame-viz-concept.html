@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Modbus Analyzer — Frame Visualization v2</title>
+<title>Modbus Analyzer — Frame Visualization v3</title>
 <style>
   :root {
     --bg: #1e1e2e;
@@ -44,6 +44,7 @@
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
+    overflow-x: auto;
   }
 
   .demo-label {
@@ -55,22 +56,18 @@
     font-weight: 600;
   }
 
-  /* === ROW LAYOUT: bytes on top, band below === */
-  .frame-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
+  /* === GRID LAYOUT — all rows share the same column template === */
+  .frame-grid {
+    display: grid;
+    /* N columns, one per byte. Each element spans its byte count. */
+    grid-template-columns: repeat(var(--total-bytes), minmax(28px, 1fr));
+    gap: 2px;
+    min-width: 600px;
   }
 
-  /* Hex bytes row */
-  .hex-row {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 4px;
-  }
+  /* Hex byte cell — spans 1 column */
   .hex-byte {
-    flex: 1 1 0;
-    min-width: 0;
+    grid-column: span 1;
     text-align: center;
     font-family: 'SF Mono', Menlo, Consolas, monospace;
     font-size: 12px;
@@ -79,10 +76,9 @@
     border-radius: 3px;
     cursor: pointer;
     transition: transform 0.15s, filter 0.15s;
-    position: relative;
   }
-  .hex-byte:hover { transform: translateY(-2px); filter: brightness(1.2); z-index: 5; }
-  .hex-byte.active { outline: 2px solid var(--accent); outline-offset: 1px; transform: translateY(-2px); z-index: 6; }
+  .hex-byte:hover { transform: translateY(-2px); filter: brightness(1.2); z-index: 5; position: relative; }
+  .hex-byte.active { outline: 2px solid var(--accent); outline-offset: 1px; transform: translateY(-2px); z-index: 6; position: relative; }
 
   .hex-byte.role-address { color: var(--address); background: rgba(250, 179, 135, 0.15); }
   .hex-byte.role-function { color: var(--function); background: rgba(166, 227, 161, 0.15); }
@@ -92,15 +88,10 @@
   .hex-byte.role-crc { color: var(--crc); background: rgba(243, 139, 168, 0.15); }
   .hex-byte.role-mbap { color: var(--mbap); background: rgba(148, 226, 213, 0.15); }
 
-  /* Color band row — proportional widths via flex-grow */
-  .band-row {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 4px;
-  }
+  /* Band segment — spans N columns (byte count) */
   .band-seg {
     border-radius: 3px;
-    padding: 4px 6px;
+    padding: 5px 6px;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -110,12 +101,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: #1a1a1a;
-    text-shadow: 0 1px 1px rgba(255,255,255,0.2);
+    min-width: 0;
   }
   .band-seg:hover { filter: brightness(1.15); transform: translateY(-1px); }
   .band-seg.active { box-shadow: inset 0 0 0 2px var(--accent); }
@@ -127,63 +117,55 @@
   .band-seg.seg-crc { background: var(--crc); }
   .band-seg.seg-mbap { background: var(--mbap); }
 
-  /* Decimal value row — vertical text (90°) */
-  .decimal-row {
-    display: flex;
-    gap: 2px;
-    min-height: 50px;
-    margin-bottom: 4px;
-  }
-  .decimal-cell {
+  /* Decimal value cell — spans N columns, horizontal text */
+  .dec-cell {
     border-radius: 3px;
-    padding: 4px 2px;
+    padding: 4px 6px;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 4px;
     min-width: 0;
     overflow: hidden;
     cursor: pointer;
     transition: filter 0.15s;
-  }
-  .decimal-cell:hover { filter: brightness(1.2); }
-  .decimal-cell.has-value { border: 1px solid var(--border); background: var(--surface-alt); }
-  .decimal-cell .vertical-text {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
     font-family: 'SF Mono', monospace;
-    font-size: 10px;
-    color: var(--text);
-    white-space: nowrap;
-    font-weight: 500;
+    font-size: 11px;
   }
-  .decimal-cell .decimal-label {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
+  .dec-cell:hover { filter: brightness(1.2); }
+  .dec-cell.active { box-shadow: inset 0 0 0 2px var(--accent); }
+  .dec-cell.has-value { background: var(--surface-alt); border: 1px solid var(--border); }
+  .dec-cell .dec-label {
     font-size: 9px;
     color: var(--text-muted);
-    margin-right: 2px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .dec-cell .dec-value {
+    color: var(--text);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  /* Field info row */
-  .info-row {
-    display: flex;
-    gap: 2px;
+  /* Info cell — size + hex */
+  .info-cell {
+    text-align: center;
+    padding: 2px 4px;
     font-size: 10px;
     color: var(--text-muted);
     font-family: 'SF Mono', monospace;
-  }
-  .info-cell {
-    text-align: center;
-    padding: 2px;
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
   }
+
+  /* Spacing between rows */
+  .frame-grid > * { margin-bottom: 2px; }
 
   /* Legend */
   .legend {
@@ -197,24 +179,15 @@
     border-radius: 6px;
     font-size: 11px;
   }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--text-muted);
-  }
-  .legend-swatch {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-  }
-  .legend-swatch.sw-address { background: var(--address); }
-  .legend-swatch.sw-function { background: var(--function); }
-  .legend-swatch.sw-start-addr { background: var(--start-addr); }
-  .legend-swatch.sw-quantity { background: var(--quantity); }
-  .legend-swatch.sw-data { background: var(--data); }
-  .legend-swatch.sw-crc { background: var(--crc); }
-  .legend-swatch.sw-mbap { background: var(--mbap); }
+  .legend-item { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+  .sw-address { background: var(--address); }
+  .sw-function { background: var(--function); }
+  .sw-start-addr { background: var(--start-addr); }
+  .sw-quantity { background: var(--quantity); }
+  .sw-data { background: var(--data); }
+  .sw-crc { background: var(--crc); }
+  .sw-mbap { background: var(--mbap); }
 
   .concept-note {
     background: var(--surface);
@@ -232,200 +205,174 @@
 </head>
 <body>
 <div class="container">
-  <h1>🎨 Frame Visualization v2 — Bytes + Band + Decimal</h1>
-  <p class="subtitle">Three rows stacked: hex bytes on top, color band in middle, vertical decimal values below. Hover any element to highlight all related.</p>
+  <h1>🎨 Frame Visualization v3 — Grid-aligned + Horizontal Text</h1>
+  <p class="subtitle">CSS Grid ensures perfect alignment between bytes, band, and decimal rows. Horizontal text for readability.</p>
 
-  <!-- Example 1: RTU Request -->
+  <!-- Example 1: RTU Request (8 bytes) -->
   <div class="demo-card" id="demo-1">
-    <div class="demo-label">Example 1 — RTU Request: slave 0x11, FC 03, read 3 regs from addr 0x006B</div>
+    <div class="demo-label">Example 1 — RTU Request: slave 0x11, FC 03, read 3 regs from addr 0x006B (8 bytes total)</div>
 
-    <div class="frame-row">
-      <!-- Row 1: Hex bytes (proportional) -->
-      <div class="hex-row">
-        <div class="hex-byte role-address" data-field="address">11</div>
-        <div class="hex-byte role-function" data-field="function">03</div>
-        <div class="hex-byte role-start-addr" data-field="start_addr" data-pair="1">00</div>
-        <div class="hex-byte role-start-addr" data-field="start_addr" data-pair="2">6B</div>
-        <div class="hex-byte role-quantity" data-field="quantity" data-pair="1">00</div>
-        <div class="hex-byte role-quantity" data-field="quantity" data-pair="2">03</div>
-        <div class="hex-byte role-crc" data-field="crc" data-pair="1">76</div>
-        <div class="hex-byte role-crc" data-field="crc" data-pair="2">87</div>
+    <div class="frame-grid" style="--total-bytes: 8;">
+      <!-- Row 1: Hex bytes (each spans 1 column) -->
+      <div class="hex-byte role-address" data-field="address">11</div>
+      <div class="hex-byte role-function" data-field="function">03</div>
+      <div class="hex-byte role-start-addr" data-field="start_addr">00</div>
+      <div class="hex-byte role-start-addr" data-field="start_addr">6B</div>
+      <div class="hex-byte role-quantity" data-field="quantity">00</div>
+      <div class="hex-byte role-quantity" data-field="quantity">03</div>
+      <div class="hex-byte role-crc" data-field="crc">76</div>
+      <div class="hex-byte role-crc" data-field="crc">87</div>
+
+      <!-- Row 2: Color band (segments span N columns = byte count) -->
+      <div class="band-seg seg-address" data-field="address" style="grid-column: span 1;">Addr</div>
+      <div class="band-seg seg-function" data-field="function" style="grid-column: span 1;">FC</div>
+      <div class="band-seg seg-start-addr" data-field="start_addr" style="grid-column: span 2;">Start Addr</div>
+      <div class="band-seg seg-quantity" data-field="quantity" style="grid-column: span 2;">Qty</div>
+      <div class="band-seg seg-crc" data-field="crc" style="grid-column: span 2;">CRC</div>
+
+      <!-- Row 3: Decimal values (horizontal, span N columns) -->
+      <div class="dec-cell" data-field="address" style="grid-column: span 1;">
+        <span class="dec-label">17</span>
+      </div>
+      <div class="dec-cell" data-field="function" style="grid-column: span 1;">
+        <span class="dec-label">03</span>
+      </div>
+      <div class="dec-cell has-value" data-field="start_addr" style="grid-column: span 2;">
+        <span class="dec-label">addr:</span>
+        <span class="dec-value">107</span>
+      </div>
+      <div class="dec-cell has-value" data-field="quantity" style="grid-column: span 2;">
+        <span class="dec-label">qty:</span>
+        <span class="dec-value">3</span>
+      </div>
+      <div class="dec-cell" data-field="crc" style="grid-column: span 2;">
+        <span class="dec-label">✓ valid</span>
       </div>
 
-      <!-- Row 2: Color band (proportional widths via flex-grow) -->
-      <div class="band-row">
-        <div class="band-seg seg-address" data-field="address" style="flex-grow: 1;">Addr</div>
-        <div class="band-seg seg-function" data-field="function" style="flex-grow: 1;">FC</div>
-        <div class="band-seg seg-start-addr" data-field="start_addr" style="flex-grow: 2;">Start Addr</div>
-        <div class="band-seg seg-quantity" data-field="quantity" style="flex-grow: 2;">Qty</div>
-        <div class="band-seg seg-crc" data-field="crc" style="flex-grow: 2;">CRC</div>
-      </div>
-
-      <!-- Row 3: Decimal values (vertical text for readability) -->
-      <div class="decimal-row">
-        <div class="decimal-cell" data-field="address" style="flex-grow: 1;">
-          <div class="decimal-label">SLAVE</div>
-          <div class="vertical-text">17</div>
-        </div>
-        <div class="decimal-cell" data-field="function" style="flex-grow: 1;">
-          <div class="decimal-label">FC</div>
-          <div class="vertical-text">03</div>
-        </div>
-        <div class="decimal-cell has-value" data-field="start_addr" style="flex-grow: 2;">
-          <div class="decimal-label">ADDR</div>
-          <div class="vertical-text">107</div>
-        </div>
-        <div class="decimal-cell has-value" data-field="quantity" style="flex-grow: 2;">
-          <div class="decimal-label">QTY</div>
-          <div class="vertical-text">3</div>
-        </div>
-        <div class="decimal-cell" data-field="crc" style="flex-grow: 2;">
-          <div class="decimal-label">CRC</div>
-          <div class="vertical-text">✓</div>
-        </div>
-      </div>
-
-      <!-- Row 4: Field info -->
-      <div class="info-row">
-        <div class="info-cell" style="flex-grow: 1;">1B</div>
-        <div class="info-cell" style="flex-grow: 1;">1B</div>
-        <div class="info-cell" style="flex-grow: 2;">2B (0x006B)</div>
-        <div class="info-cell" style="flex-grow: 2;">2B (0x0003)</div>
-        <div class="info-cell" style="flex-grow: 2;">2B (0x8776)</div>
-      </div>
+      <!-- Row 4: Field info (size + hex) -->
+      <div class="info-cell" style="grid-column: span 1;">1B</div>
+      <div class="info-cell" style="grid-column: span 1;">1B</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x006B</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x0003</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x8776</div>
     </div>
   </div>
 
-  <!-- Example 2: RTU Response with data -->
+  <!-- Example 2: RTU Response with data (11 bytes) -->
   <div class="demo-card" id="demo-2">
-    <div class="demo-label">Example 2 — RTU Response: 6 bytes of register data (3 registers: 107, 200, 300)</div>
+    <div class="demo-label">Example 2 — RTU Response: 6 bytes data = 3 registers (107, 200, 300) — 11 bytes total</div>
 
-    <div class="frame-row">
-      <div class="hex-row">
-        <div class="hex-byte role-address" data-field="address">11</div>
-        <div class="hex-byte role-function" data-field="function">03</div>
-        <div class="hex-byte role-quantity" data-field="byte_count">06</div>
-        <div class="hex-byte role-data" data-field="data" data-reg="1">00</div>
-        <div class="hex-byte role-data" data-field="data" data-reg="1">6B</div>
-        <div class="hex-byte role-data" data-field="data" data-reg="2">00</div>
-        <div class="hex-byte role-data" data-field="data" data-reg="2">C8</div>
-        <div class="hex-byte role-data" data-field="data" data-reg="3">01</div>
-        <div class="hex-byte role-data" data-field="data" data-reg="3">2C</div>
-        <div class="hex-byte role-crc" data-field="crc" data-pair="1">3A</div>
-        <div class="hex-byte role-crc" data-field="crc" data-pair="2">F9</div>
+    <div class="frame-grid" style="--total-bytes: 11;">
+      <!-- Hex bytes -->
+      <div class="hex-byte role-address" data-field="address">11</div>
+      <div class="hex-byte role-function" data-field="function">03</div>
+      <div class="hex-byte role-quantity" data-field="byte_count">06</div>
+      <div class="hex-byte role-data" data-field="data">00</div>
+      <div class="hex-byte role-data" data-field="data">6B</div>
+      <div class="hex-byte role-data" data-field="data">00</div>
+      <div class="hex-byte role-data" data-field="data">C8</div>
+      <div class="hex-byte role-data" data-field="data">01</div>
+      <div class="hex-byte role-data" data-field="data">2C</div>
+      <div class="hex-byte role-crc" data-field="crc">3A</div>
+      <div class="hex-byte role-crc" data-field="crc">F9</div>
+
+      <!-- Color band -->
+      <div class="band-seg seg-address" data-field="address" style="grid-column: span 1;">Addr</div>
+      <div class="band-seg seg-function" data-field="function" style="grid-column: span 1;">FC</div>
+      <div class="band-seg seg-quantity" data-field="byte_count" style="grid-column: span 1;">BC</div>
+      <div class="band-seg seg-data" data-field="data" style="grid-column: span 6;">Data · 6 bytes · 3 regs</div>
+      <div class="band-seg seg-crc" data-field="crc" style="grid-column: span 2;">CRC</div>
+
+      <!-- Decimal values -->
+      <div class="dec-cell" data-field="address" style="grid-column: span 1;">
+        <span class="dec-label">17</span>
+      </div>
+      <div class="dec-cell" data-field="function" style="grid-column: span 1;">
+        <span class="dec-label">03</span>
+      </div>
+      <div class="dec-cell has-value" data-field="byte_count" style="grid-column: span 1;">
+        <span class="dec-value">6</span>
+      </div>
+      <div class="dec-cell has-value" data-field="data" style="grid-column: span 6;">
+        <span class="dec-label">regs:</span>
+        <span class="dec-value">107 · 200 · 300</span>
+      </div>
+      <div class="dec-cell" data-field="crc" style="grid-column: span 2;">
+        <span class="dec-label">✓ valid</span>
       </div>
 
-      <div class="band-row">
-        <div class="band-seg seg-address" data-field="address" style="flex-grow: 1;">Addr</div>
-        <div class="band-seg seg-function" data-field="function" style="flex-grow: 1;">FC</div>
-        <div class="band-seg seg-quantity" data-field="byte_count" style="flex-grow: 1;">BC</div>
-        <div class="band-seg seg-data" data-field="data" style="flex-grow: 6;">Data (6 bytes)</div>
-        <div class="band-seg seg-crc" data-field="crc" style="flex-grow: 2;">CRC</div>
-      </div>
-
-      <div class="decimal-row">
-        <div class="decimal-cell" data-field="address" style="flex-grow: 1;">
-          <div class="decimal-label">SLAVE</div>
-          <div class="vertical-text">17</div>
-        </div>
-        <div class="decimal-cell" data-field="function" style="flex-grow: 1;">
-          <div class="decimal-label">FC</div>
-          <div class="vertical-text">03</div>
-        </div>
-        <div class="decimal-cell has-value" data-field="byte_count" style="flex-grow: 1;">
-          <div class="decimal-label">BC</div>
-          <div class="vertical-text">6</div>
-        </div>
-        <div class="decimal-cell has-value" data-field="data" style="flex-grow: 6;">
-          <div class="decimal-label">REGS</div>
-          <div class="vertical-text">107 · 200 · 300</div>
-        </div>
-        <div class="decimal-cell" data-field="crc" style="flex-grow: 2;">
-          <div class="decimal-label">CRC</div>
-          <div class="vertical-text">✓</div>
-        </div>
-      </div>
-
-      <div class="info-row">
-        <div class="info-cell" style="flex-grow: 1;">1B</div>
-        <div class="info-cell" style="flex-grow: 1;">1B</div>
-        <div class="info-cell" style="flex-grow: 1;">1B</div>
-        <div class="info-cell" style="flex-grow: 6;">6B = 3 regs × 2B</div>
-        <div class="info-cell" style="flex-grow: 2;">2B (0xF93A)</div>
-      </div>
+      <!-- Field info -->
+      <div class="info-cell" style="grid-column: span 1;">1B</div>
+      <div class="info-cell" style="grid-column: span 1;">1B</div>
+      <div class="info-cell" style="grid-column: span 1;">1B</div>
+      <div class="info-cell" style="grid-column: span 6;">6B = 3 regs × 2B</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0xF93A</div>
     </div>
   </div>
 
-  <!-- Example 3: TCP with MBAP -->
+  <!-- Example 3: TCP with MBAP (12 bytes) -->
   <div class="demo-card" id="demo-3">
-    <div class="demo-label">Example 3 — Modbus TCP (MBAP header + PDU)</div>
+    <div class="demo-label">Example 3 — Modbus TCP: MBAP header (6B) + PDU (6B) — 12 bytes total</div>
 
-    <div class="frame-row">
-      <div class="hex-row">
-        <div class="hex-byte role-mbap" data-field="mbap_tx" data-pair="1">00</div>
-        <div class="hex-byte role-mbap" data-field="mbap_tx" data-pair="2">01</div>
-        <div class="hex-byte role-mbap" data-field="mbap_proto" data-pair="1">00</div>
-        <div class="hex-byte role-mbap" data-field="mbap_proto" data-pair="2">00</div>
-        <div class="hex-byte role-mbap" data-field="mbap_len" data-pair="1">00</div>
-        <div class="hex-byte role-mbap" data-field="mbap_len" data-pair="2">06</div>
-        <div class="hex-byte role-address" data-field="unit_id">01</div>
-        <div class="hex-byte role-function" data-field="function">03</div>
-        <div class="hex-byte role-start-addr" data-field="start_addr" data-pair="1">00</div>
-        <div class="hex-byte role-start-addr" data-field="start_addr" data-pair="2">6B</div>
-        <div class="hex-byte role-quantity" data-field="quantity" data-pair="1">00</div>
-        <div class="hex-byte role-quantity" data-field="quantity" data-pair="2">03</div>
+    <div class="frame-grid" style="--total-bytes: 12;">
+      <!-- Hex bytes -->
+      <div class="hex-byte role-mbap" data-field="mbap_tx">00</div>
+      <div class="hex-byte role-mbap" data-field="mbap_tx">01</div>
+      <div class="hex-byte role-mbap" data-field="mbap_proto">00</div>
+      <div class="hex-byte role-mbap" data-field="mbap_proto">00</div>
+      <div class="hex-byte role-mbap" data-field="mbap_len">00</div>
+      <div class="hex-byte role-mbap" data-field="mbap_len">06</div>
+      <div class="hex-byte role-address" data-field="unit_id">01</div>
+      <div class="hex-byte role-function" data-field="function">03</div>
+      <div class="hex-byte role-start-addr" data-field="start_addr">00</div>
+      <div class="hex-byte role-start-addr" data-field="start_addr">6B</div>
+      <div class="hex-byte role-quantity" data-field="quantity">00</div>
+      <div class="hex-byte role-quantity" data-field="quantity">03</div>
+
+      <!-- Color band: MBAP (6B) + PDU (6B) -->
+      <div class="band-seg seg-mbap" data-field="mbap_tx" style="grid-column: span 2;">Tx ID</div>
+      <div class="band-seg seg-mbap" data-field="mbap_proto" style="grid-column: span 2;">Proto</div>
+      <div class="band-seg seg-mbap" data-field="mbap_len" style="grid-column: span 2;">Length</div>
+      <div class="band-seg seg-address" data-field="unit_id" style="grid-column: span 1;">Unit</div>
+      <div class="band-seg seg-function" data-field="function" style="grid-column: span 1;">FC</div>
+      <div class="band-seg seg-start-addr" data-field="start_addr" style="grid-column: span 2;">Start Addr</div>
+      <div class="band-seg seg-quantity" data-field="quantity" style="grid-column: span 2;">Qty</div>
+
+      <!-- Decimal values -->
+      <div class="dec-cell has-value" data-field="mbap_tx" style="grid-column: span 2;">
+        <span class="dec-label">tx:</span>
+        <span class="dec-value">1</span>
+      </div>
+      <div class="dec-cell" data-field="mbap_proto" style="grid-column: span 2;">
+        <span class="dec-label">0</span>
+      </div>
+      <div class="dec-cell has-value" data-field="mbap_len" style="grid-column: span 2;">
+        <span class="dec-label">len:</span>
+        <span class="dec-value">6</span>
+      </div>
+      <div class="dec-cell" data-field="unit_id" style="grid-column: span 1;">
+        <span class="dec-label">1</span>
+      </div>
+      <div class="dec-cell" data-field="function" style="grid-column: span 1;">
+        <span class="dec-label">03</span>
+      </div>
+      <div class="dec-cell has-value" data-field="start_addr" style="grid-column: span 2;">
+        <span class="dec-label">addr:</span>
+        <span class="dec-value">107</span>
+      </div>
+      <div class="dec-cell has-value" data-field="quantity" style="grid-column: span 2;">
+        <span class="dec-label">qty:</span>
+        <span class="dec-value">3</span>
       </div>
 
-      <div class="band-row">
-        <div class="band-seg seg-mbap" data-field="mbap_tx" style="flex-grow: 2;">Tx ID</div>
-        <div class="band-seg seg-mbap" data-field="mbap_proto" style="flex-grow: 2;">Proto</div>
-        <div class="band-seg seg-mbap" data-field="mbap_len" style="flex-grow: 2;">Length</div>
-        <div class="band-seg seg-address" data-field="unit_id" style="flex-grow: 1;">Unit</div>
-        <div class="band-seg seg-function" data-field="function" style="flex-grow: 1;">FC</div>
-        <div class="band-seg seg-start-addr" data-field="start_addr" style="flex-grow: 2;">Start Addr</div>
-        <div class="band-seg seg-quantity" data-field="quantity" style="flex-grow: 2;">Qty</div>
-      </div>
-
-      <div class="decimal-row">
-        <div class="decimal-cell has-value" data-field="mbap_tx" style="flex-grow: 2;">
-          <div class="decimal-label">TX</div>
-          <div class="vertical-text">1</div>
-        </div>
-        <div class="decimal-cell" data-field="mbap_proto" style="flex-grow: 2;">
-          <div class="decimal-label">PROTO</div>
-          <div class="vertical-text">0</div>
-        </div>
-        <div class="decimal-cell has-value" data-field="mbap_len" style="flex-grow: 2;">
-          <div class="decimal-label">LEN</div>
-          <div class="vertical-text">6</div>
-        </div>
-        <div class="decimal-cell" data-field="unit_id" style="flex-grow: 1;">
-          <div class="decimal-label">UNIT</div>
-          <div class="vertical-text">1</div>
-        </div>
-        <div class="decimal-cell" data-field="function" style="flex-grow: 1;">
-          <div class="decimal-label">FC</div>
-          <div class="vertical-text">03</div>
-        </div>
-        <div class="decimal-cell has-value" data-field="start_addr" style="flex-grow: 2;">
-          <div class="decimal-label">ADDR</div>
-          <div class="vertical-text">107</div>
-        </div>
-        <div class="decimal-cell has-value" data-field="quantity" style="flex-grow: 2;">
-          <div class="decimal-label">QTY</div>
-          <div class="vertical-text">3</div>
-        </div>
-      </div>
-
-      <div class="info-row">
-        <div class="info-cell" style="flex-grow: 2;">2B</div>
-        <div class="info-cell" style="flex-grow: 2;">2B</div>
-        <div class="info-cell" style="flex-grow: 2;">2B</div>
-        <div class="info-cell" style="flex-grow: 1;">1B</div>
-        <div class="info-cell" style="flex-grow: 1;">1B</div>
-        <div class="info-cell" style="flex-grow: 2;">2B (0x006B)</div>
-        <div class="info-cell" style="flex-grow: 2;">2B (0x0003)</div>
-      </div>
+      <!-- Field info -->
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x0001</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x0000</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x0006</div>
+      <div class="info-cell" style="grid-column: span 1;">1B</div>
+      <div class="info-cell" style="grid-column: span 1;">1B</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x006B</div>
+      <div class="info-cell" style="grid-column: span 2;">2B · 0x0003</div>
     </div>
   </div>
 
@@ -442,30 +389,23 @@
 
   <!-- Concept explanation -->
   <div class="concept-note">
-    <strong>Layout (3 rows stacked):</strong>
+    <strong>Что изменилось в v3:</strong>
     <ul>
-      <li><strong>Row 1 — Hex bytes</strong>: каждый байт в своей ячейке, окрашен по роли. Ширина ячейки = 1 байт (равная)</li>
-      <li><strong>Row 2 — Color band</strong>: пропорциональные сегменты по размеру поля (flex-grow = byte count). "Data (6 bytes)" шире "Addr"</li>
-      <li><strong>Row 3 — Decimal values</strong>: вертикальный текст (90°) для ключевых значений — Addr=107, Qty=3, Regs=107·200·300. Серым — label (SLAVE, FC, ADDR…)</li>
-      <li><strong>Row 4 — Info</strong>: размер поля (1B/2B/6B) + hex значение</li>
+      <li><strong>CSS Grid</strong> вместо flexbox — все 4 ряда используют одну сетку <code>grid-template-columns: repeat(N-bytes, 1fr)</code></li>
+      <li><strong>Идеальное выравнивание</strong> — band segment шириной 2B точно совпадает с двумя hex bytes под ним</li>
+      <li><strong>Горизонтальный текст</strong> для decimal значений — читается естественно, не ломается на длинных значениях</li>
+      <li><strong>Каждый элемент</strong> использует <code>grid-column: span N</code> где N = количество байт в поле</li>
     </ul>
-    <strong style="display:block; margin-top:12px;">Variable-width segments:</strong>
+    <strong style="display:block; margin-top:12px;">4 ряда (stacked, идеально выровнены):</strong>
     <ul>
-      <li>Band segments используют <code>flex-grow: N</code> где N = количество байт в поле</li>
-      <li>"Addr" (1B) → узкий, "Data" (6B) → широкий — визуально видно пропорцию</li>
-      <li>Decimal cells выровнены по той же сетке — значения под своими полями</li>
-    </ul>
-    <strong style="display:block; margin-top:12px;">Vertical text (90°):</strong>
-    <ul>
-      <li>Decimal значения (107, 3, 6) повернуты вертикально — экономят горизонтальное место</li>
-      <li>Label (ADDR, QTY, REGS) серым сверху — compact reference</li>
-      <li>Для длинных значений (regs=107·200·300) — текст flows вертикально</li>
+      <li><strong>Row 1 — Hex bytes</strong>: каждый байт в 1 колонке, окрашен по роли</li>
+      <li><strong>Row 2 — Color band</strong>: сегменты span N колонок, пропорционально размеру поля</li>
+      <li><strong>Row 3 — Decimal values</strong>: горизонтальный текст, серый label + white value, только для ключевых полей</li>
+      <li><strong>Row 4 — Field info</strong>: размер (1B/2B/6B) + hex значение</li>
     </ul>
     <strong style="display:block; margin-top:12px;">Bidirectional highlighting:</strong>
     <ul>
-      <li>Hover на байт → подсвечивается segment в band + decimal cell</li>
-      <li>Hover на band segment → подсвечиваются байты + decimal cell</li>
-      <li>Hover на decimal cell → подсвечивается всё</li>
+      <li>Hover на любой элемент → подсвечиваются все связанные элементы в других рядах</li>
     </ul>
   </div>
 </div>
@@ -473,24 +413,17 @@
 <script>
   // Bidirectional highlighting
   document.querySelectorAll('.demo-card').forEach(card => {
-    const hexBytes = card.querySelectorAll('.hex-byte');
-    const bandSegs = card.querySelectorAll('.band-seg');
-    const decCells = card.querySelectorAll('.decimal-cell');
-
-    function highlight(field) {
-      if (!field) return;
-      hexBytes.forEach(b => b.classList.toggle('active', b.dataset.field === field));
-      bandSegs.forEach(s => s.classList.toggle('active', s.dataset.field === field));
-      decCells.forEach(c => c.classList.toggle('active', c.dataset.field === field));
-    }
-    function clear() {
-      hexBytes.forEach(b => b.classList.remove('active'));
-      bandSegs.forEach(s => s.classList.remove('active'));
-      decCells.forEach(c => c.classList.remove('active'));
-    }
-    [...hexBytes, ...bandSegs, ...decCells].forEach(el => {
-      el.addEventListener('mouseenter', () => highlight(el.dataset.field));
-      el.addEventListener('mouseleave', clear);
+    const elements = card.querySelectorAll('[data-field]');
+    elements.forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        const field = el.dataset.field;
+        card.querySelectorAll('[data-field]').forEach(e => {
+          e.classList.toggle('active', e.dataset.field === field);
+        });
+      });
+      el.addEventListener('mouseleave', () => {
+        card.querySelectorAll('[data-field]').forEach(e => e.classList.remove('active'));
+      });
     });
   });
 </script>
