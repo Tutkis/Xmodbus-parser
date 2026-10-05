@@ -77,7 +77,7 @@ export default function Page() {
 
             {/* Locale selector */}
             <Select value={locale} onValueChange={(v) => setLocale(v)}>
-              <SelectTrigger className="h-8 w-[90px] sm:w-[120px] px-2 text-xs shrink-0" aria-label={t('locale.label')}>
+              <SelectTrigger className="h-8 w-[100px] sm:w-[120px] px-2 text-xs shrink-0" aria-label={t('locale.label')}>
                 <SelectValue placeholder="EN" />
               </SelectTrigger>
               <SelectContent>
@@ -98,7 +98,7 @@ export default function Page() {
 
             {/* Theme selector */}
             <Select value={theme.id} onValueChange={(v) => setTheme(v)}>
-              <SelectTrigger className="h-8 w-[100px] sm:w-[140px] px-2 text-xs shrink-0" aria-label={t('header.theme')}>
+              <SelectTrigger className="h-8 w-[110px] sm:w-[140px] px-2 text-xs shrink-0" aria-label={t('header.theme')}>
                 <SelectValue placeholder={t('header.theme')} />
               </SelectTrigger>
               <SelectContent>
