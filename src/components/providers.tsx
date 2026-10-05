@@ -17,17 +17,16 @@ export function Providers({ children }: { children: ReactNode }) {
   const { locale, setLocale } = useI18n();
 
   // Detect browser language or restore persisted locale on mount.
+  // Runs ONCE — empty deps (setLocale is a stable singleton method).
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
     const stored = typeof localStorage !== 'undefined'
       ? localStorage.getItem('modbus-analyzer-locale')
       : null;
     if (stored) {
-      // Restore persisted locale (i18n singleton starts with 'en' default).
       setLocale(stored);
       return;
     }
-    // First visit — auto-detect from browser.
     const nav = navigator.language?.toLowerCase() ?? 'en';
     let picked: 'en' | 'ru' | 'zh' = 'en';
     if (nav.startsWith('ru')) picked = 'ru';
@@ -38,7 +37,8 @@ export function Providers({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-  }, [setLocale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist locale on change.
   useEffect(() => {
