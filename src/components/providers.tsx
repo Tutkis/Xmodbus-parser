@@ -55,20 +55,32 @@ export function Providers({ children }: { children: ReactNode }) {
     if (!('serviceWorker' in navigator)) return;
 
     const registerSW = () => {
-      // Build SW URL using NEXT_PUBLIC_BASE_PATH so it works on both
-      // root domains and subpaths (e.g. GitHub Pages /repo-name/).
-      // Fallback: derive from the <link rel="manifest"> href which
-      // already has the correct basePath baked in by Next.js.
       const bp = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, '') || '';
       const swUrl = `${bp}/sw.js`;
       const scope = `${bp}/`;
       navigator.serviceWorker
-        .register(swUrl, { scope })
+        .register(swUrl, { scope, updateViaCache: 'none' })
         .then((reg) => {
-          // Check for updates every hour.
+          // Force update if a new SW is waiting.
           if (reg.waiting) {
             reg.waiting.postMessage('SKIP_WAITING');
           }
+          // Listen for new SW versions.
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New SW installed — force it to activate.
+                  newWorker.postMessage('SKIP_WAITING');
+                }
+              });
+            }
+          });
+          // If controller changed (new SW activated), reload page.
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
+          });
         })
         .catch(() => {
           // Silent fail — SW is a progressive enhancement.

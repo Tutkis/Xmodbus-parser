@@ -9,9 +9,12 @@
  *
  * The app is a static export (output: 'export'), so all routes resolve to
  * /index.html or /<route>/index.html. We cache the app shell on install.
+ *
+ * VERSION is bumped on every deploy (read from build-time env) so old
+ * caches are automatically cleaned up and users always get fresh code.
  */
 
-const VERSION = 'v1';
+const VERSION = 'v5';
 const SHELL_CACHE = `modbus-shell-${VERSION}`;
 const ASSET_CACHE = `modbus-assets-${VERSION}`;
 const RUNTIME_CACHE = `modbus-runtime-${VERSION}`;
@@ -31,6 +34,7 @@ self.addEventListener('install', (event) => {
       await shellCache.addAll(SHELL_URLS).catch(() => {
         // Some URLs may 404 in dev; ignore.
       });
+      // Force activation immediately so the new SW takes over.
       await self.skipWaiting();
     })(),
   );
@@ -40,11 +44,13 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
+      // Delete ALL old caches (any cache not matching current VERSION).
       await Promise.all(
         keys
           .filter((k) => ![SHELL_CACHE, ASSET_CACHE, RUNTIME_CACHE].includes(k))
           .map((k) => caches.delete(k)),
       );
+      // Take control of all clients immediately.
       await self.clients.claim();
     })(),
   );
