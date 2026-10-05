@@ -14,7 +14,7 @@
  * caches are automatically cleaned up and users always get fresh code.
  */
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL_CACHE = `modbus-shell-${VERSION}`;
 const ASSET_CACHE = `modbus-assets-${VERSION}`;
 const RUNTIME_CACHE = `modbus-runtime-${VERSION}`;

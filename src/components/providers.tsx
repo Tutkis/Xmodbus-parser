@@ -65,22 +65,6 @@ export function Providers({ children }: { children: ReactNode }) {
           if (reg.waiting) {
             reg.waiting.postMessage('SKIP_WAITING');
           }
-          // Listen for new SW versions.
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New SW installed — force it to activate.
-                  newWorker.postMessage('SKIP_WAITING');
-                }
-              });
-            }
-          });
-          // If controller changed (new SW activated), reload page.
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            window.location.reload();
-          });
         })
         .catch(() => {
           // Silent fail — SW is a progressive enhancement.
