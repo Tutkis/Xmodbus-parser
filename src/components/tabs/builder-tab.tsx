@@ -387,13 +387,13 @@ function SegmentedControl<T extends string>({
       }}
       aria-label={ariaLabel}
       variant="outline"
-      className="flex w-full h-10"
+      className="flex w-full h-9 min-w-0"
     >
       {options.map((opt) => (
         <ToggleGroupItem
           key={opt.value}
           value={opt.value}
-          className="flex-1 h-10 text-xs sm:text-sm"
+          className="flex-1 min-w-0 h-9 text-xs px-2 sm:px-3 whitespace-nowrap overflow-hidden text-ellipsis"
         >
           {opt.label}
         </ToggleGroupItem>
