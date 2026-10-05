@@ -393,7 +393,7 @@ function SegmentedControl<T extends string>({
         <ToggleGroupItem
           key={opt.value}
           value={opt.value}
-          className="flex-1 min-w-0 h-9 text-xs px-2 sm:px-3 whitespace-nowrap overflow-hidden text-ellipsis"
+          className="flex-1 min-w-0 h-9 text-[10px] sm:text-xs px-1.5 sm:px-3 whitespace-nowrap leading-tight"
         >
           {opt.label}
         </ToggleGroupItem>

@@ -240,7 +240,7 @@ function FrameGrid({
           return (
             <div
               key={`band-${i}`}
-              className="rounded text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer transition-filter px-1 py-0.5"
+              className="rounded text-[8px] sm:text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center overflow-hidden whitespace-nowrap cursor-pointer transition-filter px-1 py-0.5"
               style={{
                 gridColumn: `span ${seg.span}`,
                 backgroundColor: colors.bg,
@@ -279,7 +279,7 @@ function FrameGrid({
               <span className="text-[9px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                 {seg.decimalValue!.label}:
               </span>
-              <span className="text-[10px] sm:text-[11px] font-mono font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+              <span className="text-[10px] sm:text-[11px] font-mono font-semibold text-foreground whitespace-nowrap overflow-hidden">
                 {seg.decimalValue!.value}
               </span>
             </div>
