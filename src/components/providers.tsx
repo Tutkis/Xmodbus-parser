@@ -16,14 +16,18 @@ export function Providers({ children }: { children: ReactNode }) {
   useTheme();
   const { locale, setLocale } = useI18n();
 
-  // Detect browser language once.
+  // Detect browser language or restore persisted locale on mount.
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
-    // Only auto-set on first visit (no persisted locale yet).
     const stored = typeof localStorage !== 'undefined'
       ? localStorage.getItem('modbus-analyzer-locale')
       : null;
-    if (stored) return;
+    if (stored) {
+      // Restore persisted locale (i18n singleton starts with 'en' default).
+      setLocale(stored);
+      return;
+    }
+    // First visit — auto-detect from browser.
     const nav = navigator.language?.toLowerCase() ?? 'en';
     let picked: 'en' | 'ru' | 'zh' = 'en';
     if (nav.startsWith('ru')) picked = 'ru';
